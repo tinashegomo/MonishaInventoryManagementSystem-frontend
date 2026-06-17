@@ -13,7 +13,7 @@ export default function Login() {
     loginUser(AuthRequestDTO, {
       onSuccess: (AuthResponseDTO) => {
         saveToken(AuthResponseDTO.token);
-        navigate("/dashboard");
+        navigate("/");
       },
       onError: (error) => {
         console.error(error.response?.data);

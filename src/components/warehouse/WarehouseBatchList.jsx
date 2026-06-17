@@ -1,11 +1,16 @@
 import { Trash2 } from "lucide-react";
 
+// Format ISO date string to readable format
 function formatDate(dateStr) {
   if (!dateStr) return "-";
   const d = new Date(dateStr);
   return d.toLocaleDateString("en-ZW", { day: "numeric", month: "short", year: "numeric" });
 }
 
+/**
+ * WarehouseBatchList — table displaying all warehouse batches.
+ * Each row shows batch details, quantities, prices, sizes, and delete action.
+ */
 export const WarehouseBatchList = ({batches,setSelectedItem}) => {
     return (
         <div className="rounded-card bg-surface-default shadow-elevation-1 overflow-hidden">
@@ -52,6 +57,7 @@ export const WarehouseBatchList = ({batches,setSelectedItem}) => {
                     <td className="px-16 py-16 text-body-normal font-medium text-text-primary text-right whitespace-nowrap tabular-nums">
                       ${batch.totalPrice?.toLocaleString()}
                     </td>
+                    {/* Size:quantity pairs — e.g. "32:80, 34:50" */}
                     <td className="px-16 py-16 text-body-small text-text-muted whitespace-nowrap">
                       {batch.batchSizes
                         ?.map((s) => `${s.size}:${s.quantity}`)
@@ -62,8 +68,7 @@ export const WarehouseBatchList = ({batches,setSelectedItem}) => {
                     </td>
                     <td className="px-24 py-16 text-right whitespace-nowrap">
                       <button
-                        // The delete button inside the table row
-                        onClick={() => setSelectedItem(batch)}  
+                        onClick={() => setSelectedItem(batch)}
                         className="rounded-input p-8 text-text-muted hover:bg-danger-bg hover:text-danger-main transition-colors"
                         aria-label={`Delete ${batch.batchName}`}
                       >

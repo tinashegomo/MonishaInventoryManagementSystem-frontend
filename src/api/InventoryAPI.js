@@ -25,6 +25,18 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor: auto-redirect to /login on 401/403
+API.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      removeToken();
+      window.location.href = "/login";
+    }
+    return Promise.reject(error);
+  }
+);
+
 /*REGISTER AND LOGIN APIs*/
 
 export const registerUser = async (UserRequestDTO) => {
@@ -77,27 +89,27 @@ export const deleteUser = async (id) => {
 /* SCHOOL APIs */
 
 export const createSchool = async (SchoolRequestDTO) => {
-  const response = await API.post(`/create-school`, SchoolRequestDTO);
+  const response = await API.post(`/school/create-school`, SchoolRequestDTO);
   return response.data;
 };
  
 export const getAllSchools = async () => {
-  const response = await API.get(`/get-all-schools`);
+  const response = await API.get(`/school/get-all-schools`);
   return response.data;
 };
  
 export const getSchoolById = async (schoolId) => {
-  const response = await API.get(`/get-school-byId/${schoolId}`);
+  const response = await API.get(`/school/get-school-byId/${schoolId}`);
   return response.data;
 };
  
 export const updateSchool = async (schoolId, SchoolRequestDTO) => {
-  const response = await API.put(`/update-school/${schoolId}`, SchoolRequestDTO);
+  const response = await API.put(`/school/update-school/${schoolId}`, SchoolRequestDTO);
   return response.data;
 };
  
 export const deleteSchool = async (schoolId) => {
-  const response = await API.delete(`/delete-school/${schoolId}`);
+  const response = await API.delete(`/school/delete-school/${schoolId}`);
   return response.data;
 };
 /* CUSTOMER APIs */
@@ -149,37 +161,42 @@ export const deleteWarehouseBatch = async (batchId) => {
   return response.data;
 };
 
+export const addSizesToBatch = async ({ batchId, sizes }) => {
+  const response = await API.post(`/warehouse/add-sizes-to-batch/${batchId}`, sizes);
+  return response.data;
+};
+
 /* PRODUCT APIs */
 
 export const createProduct = async (ProductRequestDTO) => {
-  const response = await API.post(`/product/create-product`, ProductRequestDTO);
+  const response = await API.post(`product/create-product`, ProductRequestDTO);
   return response.data;
 };
 
 export const getAllProducts = async () => {
-  const response = await API.get(`/product/get-all-products`);
+  const response = await API.get(`product/get-all-products`);
   return response.data;
 };
 
 export const getProductById = async (productId) => {
-  const response = await API.get(`/product/get-product-byId/${productId}`);
+  const response = await API.get(`product/get-product-byId/${productId}`);
   return response.data;
 };
 
 export const deleteProduct = async (productId) => {
-  const response = await API.delete(`/product/delete-product/${productId}`);
+  const response = await API.delete(`product/delete-product/${productId}`);
   return response.data;
 };
 
 /* ORDER APIs */
 
 export const createOrder = async (OrderRequestDTO) => {
-  const response = await API.post(`/order/create-order`, OrderRequestDTO);
+  const response = await API.post(`order/create-order`, OrderRequestDTO);
   return response.data;
 };
 
 export const getAllOrders = async () => {
-  const response = await API.get(`/order/get-all-orders`);
+  const response = await API.get(`order/get-all-orders`);
   return response.data;
 };
 

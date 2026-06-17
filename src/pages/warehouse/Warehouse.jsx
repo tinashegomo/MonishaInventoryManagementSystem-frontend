@@ -5,19 +5,18 @@ import { useGetAllWarehouseBatches, useDeleteWarehouseBatch } from "@/hooks/Inve
 import {WarehouseBatchList} from "@/components/warehouse/WarehouseBatchList";
 import ConfirmBatchDeleteModal from "@/components/warehouse/ConfirmBatchDeleteModal";
 
-
-function formatDate(dateStr) {
-  if (!dateStr) return "-";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-ZW", { day: "numeric", month: "short", year: "numeric" });
-}
-
+/**
+ * Warehouse — list page for all warehouse batches.
+ * Shows loading spinner, empty state, error banner, or batch table.
+ * Delete triggers a confirmation modal before removing.
+ */
 export default function Warehouse() {
 
   const { data: batches, isLoading, isError, error } = useGetAllWarehouseBatches();
   const { mutate: deleteBatch, isPending: isDeleting } = useDeleteWarehouseBatch();
   const [selectedItem, setSelectedItem] = useState(null);
 
+  // Delete selected batch, close modal on success or error
   const handleDeleteConfirm = () => {
     if (!selectedItem) return;
     deleteBatch(selectedItem.batchId, {

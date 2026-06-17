@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import * as inventoryAPI from "../api/InventoryApi";
+import * as inventoryAPI from "@/api/InventoryAPI";
 
 /* AUTH HOOKS */
 
@@ -255,6 +255,20 @@ export const useDeleteWarehouseBatch = () => {
   });
 };
 
+export const useAddSizesToBatch = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ batchId, sizes }) => inventoryAPI.addSizesToBatch({ batchId, sizes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["warehouseBatches"] });
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+};
+
 /* PRODUCT HOOKS */
 
 export const useGetAllProducts = () => {
@@ -279,6 +293,7 @@ export const useCreateProduct = () => {
     mutationFn: (ProductRequestDTO) => inventoryAPI.createProduct(ProductRequestDTO),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["warehouseBatches"] });
     },
     onError: (error) => {
       console.log(error);

@@ -1,66 +1,52 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, GraduationCap } from "lucide-react";
+import { Pencil, Trash2, Users } from "lucide-react";
 import {
-  useGetAllSchools,
-  useCreateSchool,
-  useUpdateSchool,
-  useDeleteSchool,
+  useGetAllCustomers,
+  useUpdateCustomer,
+  useDeleteCustomer,
 } from "@/hooks/InventoryHooks";
-import { SchoolModal } from "@/components/school/SchoolModal";
+import { CustomerModal } from "@/components/customer/CustomerModal";
 
-export default function SchoolsPage() {
+/**
+ * Customers — read-only list page with edit and delete.
+ * Creation is done during order creation (CustomerInput in CreateOrder).
+ */
+export default function Customers() {
 
   // --- Modal state ---
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedSchool, setSelectedSchool] = useState(null);
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
   // --- Data & mutations ---
-  const { data: schools = [], isLoading, isError } = useGetAllSchools();
-
-  const { mutate: createSchool, isPending: isCreating, error: createError } = useCreateSchool();
-  const { mutate: updateSchool, isPending: isUpdating, error: updateError } = useUpdateSchool();
-  const { mutate: deleteSchool, isPending: isDeleting } = useDeleteSchool();
+  const { data: customers = [], isLoading, isError } = useGetAllCustomers();
+  const { mutate: updateCustomer, isPending: isUpdating, error: updateError } = useUpdateCustomer();
+  const { mutate: deleteCustomer, isPending: isDeleting } = useDeleteCustomer();
 
   // --- Handlers ---
 
-  // CLOSE MODAL — single close handler for both create and edit
-  // Closes the modal, clears the selected school, resets the form via key change
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedSchool(null);
+    setSelectedCustomer(null);
   };
 
-  // OPEN CREATE — no school selected, modal opens in create mode
-  const handleOpenCreate = () => {
-    setSelectedSchool(null);
+  const handleOpenEdit = (customer) => {
+    setSelectedCustomer(customer);
     setIsModalOpen(true);
   };
 
-  // OPEN EDIT — school is set first, then modal opens in edit mode
-  const handleOpenEdit = (school) => {
-    setSelectedSchool(school);
-    setIsModalOpen(true);
-  };
-
-  const handleCreate = (SchoolRequestDTO) => {
-    createSchool(SchoolRequestDTO, {
-      onSuccess: () => handleCloseModal(),
-    });
-  };
-
-  const handleUpdate = (SchoolRequestDTO) => {
-    updateSchool(
-      { schoolId: selectedSchool.schoolId, SchoolRequestDTO },
+  const handleUpdate = (CustomerRequestDTO) => {
+    updateCustomer(
+      { customerId: selectedCustomer.customerId, CustomerRequestDTO },
       {
         onSuccess: () => handleCloseModal(),
       }
     );
   };
 
-  const handleDelete = (schoolId) => {
-    setDeletingId(schoolId);
-    deleteSchool(schoolId, {
+  const handleDelete = (customerId) => {
+    setDeletingId(customerId);
+    deleteCustomer(customerId, {
       onSettled: () => setDeletingId(null),
     });
   };
@@ -70,55 +56,49 @@ export default function SchoolsPage() {
   return (
     <div>
       {/* Page header */}
-      <div className="mb-24 flex items-center justify-between">
-        <div>
-          <h1 className="text-h2 font-bold text-text-primary">Schools</h1>
-          <p className="mt-4 text-body-normal text-text-secondary">
-            Manage schools associated with uniform products
-          </p>
-        </div>
-        <button
-          onClick={handleOpenCreate}
-          className="flex items-center gap-8 rounded-input bg-brand-primary px-20 py-10 text-body-normal font-semibold text-neutral-0 hover:bg-brand-hover active:bg-brand-pressed transition-colors duration-200"
-        >
-          <Plus className="h-16 w-16" />
-          Add School
-        </button>
+      <div className="mb-24">
+        <h1 className="text-h2 font-bold text-text-primary">Customers</h1>
+        <p className="mt-4 text-body-normal text-text-secondary">
+          View and manage customer details
+        </p>
       </div>
 
       {/* Loading state */}
       {isLoading && (
-        <p className="text-body-normal text-text-muted">Loading schools...</p>
+        <p className="text-body-normal text-text-muted">Loading customers...</p>
       )}
 
       {/* Fetch error */}
       {isError && (
         <div className="rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
-          Failed to load schools. Please refresh the page.
+          Failed to load customers. Please refresh the page.
         </div>
       )}
 
       {/* Empty state */}
-      {!isLoading && !isError && schools.length === 0 && (
+      {!isLoading && !isError && customers.length === 0 && (
         <div className="flex flex-col items-center justify-center rounded-card border border-border-default bg-surface-default py-48 text-center">
-          <GraduationCap className="mb-12 h-40 w-40 text-text-muted" />
+          <Users className="mb-12 h-40 w-40 text-text-muted" />
           <p className="text-body-normal font-medium text-text-primary">
-            No schools yet
+            No customers yet
           </p>
           <p className="mt-4 text-body-small text-text-muted">
-            Click Add School to get started
+            Customers are created when placing orders
           </p>
         </div>
       )}
 
-      {/* Schools table */}
-      {!isLoading && schools.length > 0 && (
+      {/* Customers table */}
+      {!isLoading && customers.length > 0 && (
         <div className="rounded-card bg-surface-default shadow-elevation-1 overflow-hidden">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border-default bg-surface-muted">
                 <th className="px-20 py-12 text-left text-ui-label font-semibold text-text-secondary">
-                  School Name
+                  Customer Name
+                </th>
+                <th className="px-20 py-12 text-left text-ui-label font-semibold text-text-secondary">
+                  Phone Number
                 </th>
                 <th className="px-20 py-12 text-left text-ui-label font-semibold text-text-secondary">
                   Date Added
@@ -129,9 +109,9 @@ export default function SchoolsPage() {
               </tr>
             </thead>
             <tbody>
-              {schools.map((school, index) => (
+              {customers.map((customer, index) => (
                 <tr
-                  key={school.schoolId}
+                  key={customer.customerId}
                   className={`border-b border-border-default last:border-0 ${
                     index % 2 === 0 ? "bg-surface-default" : "bg-surface-muted/40"
                   }`}
@@ -139,15 +119,18 @@ export default function SchoolsPage() {
                   <td className="px-20 py-14">
                     <div className="flex items-center gap-10">
                       <div className="flex h-32 w-32 items-center justify-center rounded-full bg-brand-tint">
-                        <GraduationCap className="h-16 w-16 text-brand-primary" />
+                        <Users className="h-16 w-16 text-brand-primary" />
                       </div>
                       <span className="text-body-normal font-medium text-text-primary">
-                        {school.schoolName}
+                        {customer.customerName}
                       </span>
                     </div>
                   </td>
                   <td className="px-20 py-14 text-body-normal text-text-secondary">
-                    {new Date(school.createdAt).toLocaleDateString("en-GB", {
+                    {customer.phoneNumber}
+                  </td>
+                  <td className="px-20 py-14 text-body-normal text-text-secondary">
+                    {new Date(customer.createdAt).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
@@ -157,19 +140,19 @@ export default function SchoolsPage() {
                     <div className="flex items-center justify-end gap-8">
                       {/* Edit button */}
                       <button
-                        onClick={() => handleOpenEdit(school)}
+                        onClick={() => handleOpenEdit(customer)}
                         className="rounded-input p-8 text-text-muted hover:bg-surface-muted hover:text-brand-primary transition-colors duration-200"
-                        aria-label={`Edit ${school.schoolName}`}
+                        aria-label={`Edit ${customer.customerName}`}
                       >
                         <Pencil className="h-16 w-16" />
                       </button>
 
                       {/* Delete button */}
                       <button
-                        onClick={() => handleDelete(school.schoolId)}
-                        disabled={isDeleting && deletingId === school.schoolId}
+                        onClick={() => handleDelete(customer.customerId)}
+                        disabled={isDeleting && deletingId === customer.customerId}
                         className="rounded-input p-8 text-text-muted hover:bg-danger-bg hover:text-danger-main transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={`Delete ${school.schoolName}`}
+                        aria-label={`Delete ${customer.customerName}`}
                       >
                         <Trash2 className="h-16 w-16" />
                       </button>
@@ -182,26 +165,21 @@ export default function SchoolsPage() {
         </div>
       )}
 
-      {/* Mutation error banners */}
-      {createError && (
-        <div className="mt-16 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
-          {createError.response?.data?.message || "Failed to create school. Please try again."}
-        </div>
-      )}
+      {/* Update error banner */}
       {updateError && (
         <div className="mt-16 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
-          {updateError.response?.data?.message || "Failed to update school. Please try again."}
+          {updateError.response?.data?.message || "Failed to update customer. Please try again."}
         </div>
       )}
 
-      {/* Single modal — school prop determines create vs edit mode */}
-      <SchoolModal
-        key={selectedSchool?.schoolId ?? "create"}
+      {/* Edit modal */}
+      <CustomerModal
+        key={selectedCustomer?.customerId}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
-        onSubmit={selectedSchool ? handleUpdate : handleCreate}
-        isPending={selectedSchool ? isUpdating : isCreating}
-        school={selectedSchool}
+        onSubmit={handleUpdate}
+        isPending={isUpdating}
+        customer={selectedCustomer}
       />
     </div>
   );
