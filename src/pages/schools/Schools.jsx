@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, Pencil, Trash2, GraduationCap } from "lucide-react";
+import { Plus, Pencil, Trash2, GraduationCap, Loader2 } from "lucide-react";
 import {
   useGetAllSchools,
   useCreateSchool,
@@ -9,7 +9,6 @@ import {
 import { SchoolModal } from "@/components/school/SchoolModal";
 
 export default function SchoolsPage() {
-
   // --- Modal state ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState(null);
@@ -23,21 +22,16 @@ export default function SchoolsPage() {
   const { mutate: deleteSchool, isPending: isDeleting } = useDeleteSchool();
 
   // --- Handlers ---
-
-  // CLOSE MODAL — single close handler for both create and edit
-  // Closes the modal, clears the selected school, resets the form via key change
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedSchool(null);
   };
 
-  // OPEN CREATE — no school selected, modal opens in create mode
   const handleOpenCreate = () => {
     setSelectedSchool(null);
     setIsModalOpen(true);
   };
 
-  // OPEN EDIT — school is set first, then modal opens in edit mode
   const handleOpenEdit = (school) => {
     setSelectedSchool(school);
     setIsModalOpen(true);
@@ -66,64 +60,64 @@ export default function SchoolsPage() {
   };
 
   // --- Render ---
-
   return (
-    <div>
-      {/* Page header */}
-      <div className="mb-24 flex items-center justify-between">
+    <div className="animate-fade-in mx-auto max-w-7xl">
+      <div className="mb-32 flex flex-col gap-16 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-h2 font-bold text-text-primary">Schools</h1>
-          <p className="mt-4 text-body-normal text-text-secondary">
+          <p className="mt-8 text-body-normal text-text-secondary">
             Manage schools associated with uniform products
           </p>
         </div>
         <button
           onClick={handleOpenCreate}
-          className="flex items-center gap-8 rounded-input bg-brand-primary px-20 py-10 text-body-normal font-semibold text-neutral-0 hover:bg-brand-hover active:bg-brand-pressed transition-colors duration-200"
+          className="inline-flex items-center justify-center gap-8 rounded-input bg-brand-primary px-14 py-8 text-sm font-semibold text-neutral-0 shadow-elevation-1 hover:bg-brand-hover hover:shadow-elevation-2 active:bg-brand-pressed press-scale transition-all duration-200"
         >
           <Plus className="h-16 w-16" />
           Add School
         </button>
       </div>
 
-      {/* Loading state */}
-      {isLoading && (
-        <p className="text-body-normal text-text-muted">Loading schools...</p>
-      )}
-
-      {/* Fetch error */}
-      {isError && (
-        <div className="rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
+      {isLoading ? (
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-16 rounded-card bg-surface-default shadow-elevation-1 animate-fade-in">
+          <Loader2 className="h-32 w-32 animate-spin text-brand-primary" />
+          <p className="text-body-normal text-text-secondary">Loading schools...</p>
+        </div>
+      ) : isError ? (
+        <div className="rounded-card bg-surface-default p-24 text-center text-body-normal text-danger-main animate-fade-in">
           Failed to load schools. Please refresh the page.
         </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && !isError && schools.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-card border border-border-default bg-surface-default py-48 text-center">
-          <GraduationCap className="mb-12 h-40 w-40 text-text-muted" />
-          <p className="text-body-normal font-medium text-text-primary">
+      ) : schools.length === 0 ? (
+        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-card bg-surface-default p-32 shadow-elevation-1 text-center animate-fade-in">
+          <div className="mb-16 flex h-64 w-64 items-center justify-center rounded-full bg-brand-tint">
+            <GraduationCap className="h-32 w-32 text-brand-primary" />
+          </div>
+          <h3 className="text-h4 font-semibold text-text-primary">
             No schools yet
+          </h3>
+          <p className="mt-8 max-w-xs text-body-normal text-text-muted">
+            Get started by adding your first school.
           </p>
-          <p className="mt-4 text-body-small text-text-muted">
-            Click Add School to get started
-          </p>
+          <button
+            onClick={handleOpenCreate}
+            className="mt-20 inline-flex items-center justify-center gap-8 rounded-input bg-brand-primary px-20 py-12 text-body-normal font-semibold text-neutral-0 shadow-elevation-1 hover:bg-brand-hover hover:shadow-elevation-2 active:bg-brand-pressed press-scale transition-all duration-200"
+          >
+            <Plus className="h-16 w-16" />
+            Add School
+          </button>
         </div>
-      )}
-
-      {/* Schools table */}
-      {!isLoading && schools.length > 0 && (
-        <div className="rounded-card bg-surface-default shadow-elevation-1 overflow-hidden">
-          <table className="w-full">
+      ) : (
+        <div className="w-full rounded-card bg-surface-default">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border-default bg-surface-muted">
-                <th className="px-20 py-12 text-left text-ui-label font-semibold text-text-secondary">
+              <tr className="border-b border-border-default">
+                <th className="min-w-[300px] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap">
                   School Name
                 </th>
-                <th className="px-20 py-12 text-left text-ui-label font-semibold text-text-secondary">
+                <th className="w-40 px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap">
                   Date Added
                 </th>
-                <th className="px-20 py-12 text-right text-ui-label font-semibold text-text-secondary">
+                <th className="w-28 px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap">
                   Actions
                 </th>
               </tr>
@@ -132,48 +126,39 @@ export default function SchoolsPage() {
               {schools.map((school, index) => (
                 <tr
                   key={school.schoolId}
-                  className={`border-b border-border-default last:border-0 ${
-                    index % 2 === 0 ? "bg-surface-default" : "bg-surface-muted/40"
-                  }`}
+                  className="border-b border-border-default/50 last:border-0 hover:bg-surface-muted/40 transition-colors duration-150"
+                  style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <td className="px-20 py-14">
-                    <div className="flex items-center gap-10">
-                      <div className="flex h-32 w-32 items-center justify-center rounded-full bg-brand-tint">
-                        <GraduationCap className="h-16 w-16 text-brand-primary" />
-                      </div>
-                      <span className="text-body-normal font-medium text-text-primary">
-                        {school.schoolName}
-                      </span>
-                    </div>
+                  <td className="min-w-[300px] px-6 py-4 font-medium text-text-primary whitespace-nowrap truncate">
+                    {school.schoolName}
                   </td>
-                  <td className="px-20 py-14 text-body-normal text-text-secondary">
+                  <td className="w-40 px-6 py-4 text-xs text-text-muted whitespace-nowrap">
                     {new Date(school.createdAt).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
                     })}
                   </td>
-                  <td className="px-20 py-14">
-                    <div className="flex items-center justify-end gap-8">
-                      {/* Edit button */}
-                      <button
-                        onClick={() => handleOpenEdit(school)}
-                        className="rounded-input p-8 text-text-muted hover:bg-surface-muted hover:text-brand-primary transition-colors duration-200"
-                        aria-label={`Edit ${school.schoolName}`}
-                      >
-                        <Pencil className="h-16 w-16" />
-                      </button>
-
-                      {/* Delete button */}
-                      <button
-                        onClick={() => handleDelete(school.schoolId)}
-                        disabled={isDeleting && deletingId === school.schoolId}
-                        className="rounded-input p-8 text-text-muted hover:bg-danger-bg hover:text-danger-main transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={`Delete ${school.schoolName}`}
-                      >
-                        <Trash2 className="h-16 w-16" />
-                      </button>
-                    </div>
+                  <td className="w-28 px-6 py-4 text-right whitespace-nowrap">
+                    <button
+                      onClick={() => handleOpenEdit(school)}
+                      className="rounded-full p-5 text-text-muted hover:bg-surface-muted hover:text-brand-primary transition-all duration-200 press-scale"
+                      aria-label={`Edit ${school.schoolName}`}
+                    >
+                      <Pencil className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(school.schoolId)}
+                      disabled={isDeleting && deletingId === school.schoolId}
+                      className="rounded-full p-5 text-text-muted hover:bg-danger-bg hover:text-danger-main transition-all duration-200 press-scale disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label={`Delete ${school.schoolName}`}
+                    >
+                      {isDeleting && deletingId === school.schoolId ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-danger-main" />
+                      ) : (
+                        <Trash2 className="w-5 h-5" />
+                      )}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -184,17 +169,16 @@ export default function SchoolsPage() {
 
       {/* Mutation error banners */}
       {createError && (
-        <div className="mt-16 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
+        <div className="mt-16 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main animate-fade-in">
           {createError.response?.data?.message || "Failed to create school. Please try again."}
         </div>
       )}
       {updateError && (
-        <div className="mt-16 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
+        <div className="mt-16 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main animate-fade-in">
           {updateError.response?.data?.message || "Failed to update school. Please try again."}
         </div>
       )}
 
-      {/* Single modal — school prop determines create vs edit mode */}
       <SchoolModal
         key={selectedSchool?.schoolId ?? "create"}
         isOpen={isModalOpen}

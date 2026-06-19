@@ -52,7 +52,7 @@ export const loginUser = async (AuthRequestDTO) => {
 /*USER APIs */
 
 export const updateUserRole = async (id, userRole) => {
-  const { data } = await API.patch(`/user/update-user-role/${id}`, null, { params: { userRole } });
+  const { data } = await API.put(`/user/update-user-role/${id}`, null, { params: { userRole } });
   return data;
 };
 
@@ -76,13 +76,25 @@ export const getUserById = async (id) => {
     return response.data;
 };  
 
-// export const updateUser = async (id, UserRequestDTO) => {
-//     const response = await API.put(`/user/update-user/${id}`, UserRequestDTO);
-//     return response.data;
-// };  
+export const updateUser = async (id, UserRequestDTO) => {
+    const response = await API.patch(`/user/update-user/${id}`, UserRequestDTO);
+    return response.data;
+};
+
+export const changePassword = async (newPassword) => {
+    const response = await API.patch(`/user/change-password`, null, {
+        params: { newPassword }
+    });
+    return response.data;
+};
 
 export const deleteUser = async (id) => {
     const response = await API.delete(`/user/delete-user/${id}`);
+    return response.data;
+};
+
+export const getUserActivity = async (id) => {
+    const response = await API.get(`/user/get-user-activity/${id}`);
     return response.data;
 };  
 

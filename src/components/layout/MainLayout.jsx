@@ -1,26 +1,20 @@
-import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
-import Sidebar from './Sidebar';
-import Header from './Header';
+import TopNav from './TopNav';
+import BottomNav from './BottomNav';
 
 export default function MainLayout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-slate-50">
-      {/* Sidebar Navigation */}
-      <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="flex flex-col h-dvh w-full overflow-hidden bg-bg-subtle">
+      {/* Desktop top navbar */}
+      <TopNav />
 
-      {/* Main Content Area */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Top Header */}
-        <Header onMenuToggle={() => setSidebarOpen(true)} />
+      {/* Content area — extra bottom padding on mobile for BottomNav, top padding on desktop for TopNav */}
+      <main className="flex-1 p-4 md:p-6 md:pt-8 pb-20 lg:pb-6 overflow-y-auto scroll-smooth">
+        <Outlet />
+      </main>
 
-        {/* Dynamic Route Content */}
-        <main className="flex-1 p-4 md:p-6 overflow-y-auto scroll-smooth">
-          <Outlet />
-        </main>
-      </div>
+      {/* Mobile bottom nav */}
+      <BottomNav />
     </div>
   );
 }

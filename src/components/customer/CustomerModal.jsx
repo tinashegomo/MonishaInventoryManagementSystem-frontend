@@ -7,26 +7,25 @@ import {
 } from "@/yupSchema/customer/CustomerRequestDTO";
 
 const inputBase =
-  "w-full rounded-input border bg-surface-default px-16 py-12 text-body-normal text-text-primary placeholder-text-muted outline-none transition-colors duration-200";
+  "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
 const inputOk =
-  "border-border-default focus:border-border-focus focus:ring-2 focus:ring-brand-subtle";
+  "border-border-default focus:border-border-focus focus-ring";
 const inputErr =
   "border-danger-main focus:border-danger-hover focus:ring-2 focus:ring-danger-bg";
 
 /*
-  CustomerModal — used for both Create and Edit.
+  CustomerModal — used for Edit.
 
   Props:
     isOpen      — controls visibility
     onClose     — called when modal should close
     onSubmit    — called with { customerName, phoneNumber } when form is valid
     isPending   — disables submit button while mutation is running
-    customer    — if provided, pre-fills the form (Edit mode)
-                  if null/undefined, form starts empty (Create mode)
+    customer    — pre-fills the form (Edit mode)
 */
 export const CustomerModal = ({ isOpen, onClose, onSubmit, isPending, customer }) => {
 
-  const { register, handleSubmit, formState: { errors }, } = useForm({
+  const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: yupResolver(customerRequestSchema),
     defaultValues: customer
       ? { customerName: customer.customerName, phoneNumber: customer.phoneNumber }
@@ -38,20 +37,20 @@ export const CustomerModal = ({ isOpen, onClose, onSubmit, isPending, customer }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-1000/50 backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-card bg-surface-default p-24 shadow-elevation-2"
+        className="relative w-full max-w-md rounded-panel bg-surface-default p-24 md:p-32 shadow-elevation-4 animate-scale-in"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="mb-20 flex items-center justify-between">
-          <h2>{customer ? "Edit Customer" : "Create Customer"}</h2>
+          <h2 className="text-h4 font-semibold text-text-primary">{customer ? "Edit Customer" : "Create Customer"}</h2>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-input p-8 text-text-muted hover:bg-surface-muted hover:text-text-primary transition-colors duration-200"
+            className="rounded-input p-8 text-text-muted hover:bg-surface-muted hover:text-text-primary transition-colors press-scale"
             aria-label="Close modal"
           >
             <X className="h-18 w-18" />
@@ -96,14 +95,14 @@ export const CustomerModal = ({ isOpen, onClose, onSubmit, isPending, customer }
             <button
               type="button"
               onClick={onClose}
-              className="rounded-input border border-border-default px-20 py-10 text-body-normal font-medium text-text-secondary hover:bg-surface-muted transition-colors duration-200"
+              className="rounded-input border border-border-default px-14 py-8 text-sm font-medium text-text-secondary hover:bg-surface-muted transition-all duration-200 press-scale"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isPending}
-              className="flex items-center justify-center gap-8 rounded-input bg-brand-primary px-20 py-10 text-body-normal font-semibold text-neutral-0 hover:bg-brand-hover active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 transition-colors duration-200"
+              className="inline-flex items-center justify-center gap-8 rounded-input bg-brand-primary px-14 py-8 text-sm font-semibold text-neutral-0 shadow-elevation-1 hover:bg-brand-hover hover:shadow-elevation-2 active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 press-scale transition-all duration-200"
             >
               {isPending ? (
                 <>

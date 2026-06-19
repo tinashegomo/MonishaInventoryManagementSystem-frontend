@@ -6,9 +6,9 @@ import { productRequestSchema, productRequestDefaultValues} from "@/yupSchema/pr
 
 // Shared Tailwind tokens for form inputs
 const inputBase =
-  "w-full rounded-input border bg-surface-default px-16 py-12 text-body-normal text-text-primary placeholder-text-muted outline-none transition-colors duration-200";
+  "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
 const inputOk =
-  "border-border-default focus:border-border-focus focus:ring-2 focus:ring-brand-subtle";
+  "border-border-default focus:border-border-focus focus-ring";
 const inputErr =
   "border-danger-main focus:border-danger-hover focus:ring-2 focus:ring-danger-bg";
 const selectWrapper = "relative";
@@ -141,7 +141,7 @@ export const ProductForm = ({onSubmit,isPending,existingBatches = [],existingSch
             {...register("productName")}
           />
           {errors.productName && (
-            <p className="mt-4 text-body-small text-danger-main">{errors.productName.message}t6</p>
+            <p className="mt-4 text-body-small text-danger-main">{errors.productName.message}</p>
           )}
         </div>
 
@@ -279,8 +279,9 @@ export const ProductForm = ({onSubmit,isPending,existingBatches = [],existingSch
         </div>
       </div>
 
-      {/* ─── Description (optional) ─── */}
+      {/* Description (optional) */}
       <div>
+        <label className="mb-8 block text-ui-label font-semibold text-text-secondary">Description (optional)</label>
         <textarea
           rows={3}
           placeholder="Any additional notes..."
@@ -295,8 +296,8 @@ export const ProductForm = ({onSubmit,isPending,existingBatches = [],existingSch
         )}
       </div>
 
-      {/* ─── Sizes & Quantities (add rows to allocate) ─── */}
-      <div>
+      {/* Sizes & Quantities (add rows to allocate) */}
+      <div className="rounded-card border border-border-default bg-surface-elevated/30 p-20">
         <div className="mb-12 flex items-center justify-between">
           <label className="text-ui-label font-semibold text-text-secondary">
             Sizes &amp; Quantities
@@ -305,20 +306,20 @@ export const ProductForm = ({onSubmit,isPending,existingBatches = [],existingSch
             type="button"
             onClick={addRow}
             disabled={!selectedBatch}
-            className="flex items-center gap-8 rounded-input border border-border-default px-16 py-8 text-body-small font-medium text-brand-primary hover:bg-brand-tint transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded-input border border-border-default bg-surface-default px-3 py-2.5 text-[11px] font-medium text-brand-primary hover:border-brand-subtle hover:bg-brand-tint transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-50 press-scale"
           >
-            <Plus className="h-14 w-14" />
+            <Plus className="h-3 w-3" />
             Add Size
           </button>
         </div>
 
         {!selectedBatch && (
-          <p className="text-body-small text-text-muted">
+          <p className="rounded-input border border-dashed border-border-default bg-surface-default p-16 text-center text-body-small text-text-muted mb-12">
             Select a batch to see available sizes.
           </p>
         )}
         {selectedBatch && sizes.length === 0 && (
-          <p className="text-body-small text-text-muted">
+          <p className="rounded-input border border-dashed border-border-default bg-surface-default p-16 text-center text-body-small text-text-muted mb-12">
             No sizes added yet. Click Add Size to begin.
           </p>
         )}
@@ -326,10 +327,10 @@ export const ProductForm = ({onSubmit,isPending,existingBatches = [],existingSch
         <div className="space-y-12">
           {sizes.map((row, index) => {
             return (
-              <div
-                key={index}
-                className="flex items-start gap-12 rounded-card bg-surface-muted p-16"
-              >
+                <div
+                  key={index}
+                  className="flex items-start gap-12 rounded-input bg-surface-default p-16 shadow-elevation-1"
+                >
                 <div className="flex-1">
                   <label className="mb-4 block text-body-small font-medium text-text-muted">
                     Size
@@ -370,7 +371,7 @@ export const ProductForm = ({onSubmit,isPending,existingBatches = [],existingSch
                 <button
                   type="button"
                   onClick={() => removeRow(index)}
-                  className="mt-24 rounded-input p-8 text-danger-main hover:bg-danger-bg hover:text-danger-hover transition-colors duration-200"
+                  className="mt-24 rounded-input p-8 text-danger-main hover:bg-danger-bg hover:text-danger-hover transition-colors duration-200 press-scale"
                   aria-label="Remove size"
                 >
                   <Trash2 className="h-16 w-16" />
@@ -385,11 +386,11 @@ export const ProductForm = ({onSubmit,isPending,existingBatches = [],existingSch
         <button
           type="submit"
           disabled={isPending}
-          className="flex items-center justify-center gap-8 rounded-input bg-brand-primary px-24 py-12 text-body-normal font-semibold text-neutral-0 hover:bg-brand-hover active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 transition-colors duration-200"
+          className="inline-flex items-center justify-center gap-8 rounded-input bg-brand-primary px-16 py-8 text-sm font-semibold text-neutral-0 shadow-elevation-1 hover:bg-brand-hover hover:shadow-elevation-2 active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 press-scale transition-all duration-200"
         >
           {isPending ? (
             <>
-              <Loader2 className="h-16 w-16 animate-spin" />
+              <Loader2 className="h-14 w-14 animate-spin" />
               Creating...
             </>
           ) : (

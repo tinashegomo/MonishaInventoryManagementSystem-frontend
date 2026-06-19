@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Pencil, Trash2, Users } from "lucide-react";
+import { Pencil, Trash2, Users, Loader2 } from "lucide-react";
 import {
   useGetAllCustomers,
   useUpdateCustomer,
@@ -12,7 +12,6 @@ import { CustomerModal } from "@/components/customer/CustomerModal";
  * Creation is done during order creation (CustomerInput in CreateOrder).
  */
 export default function Customers() {
-
   // --- Modal state ---
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -24,7 +23,6 @@ export default function Customers() {
   const { mutate: deleteCustomer, isPending: isDeleting } = useDeleteCustomer();
 
   // --- Handlers ---
-
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedCustomer(null);
@@ -52,58 +50,51 @@ export default function Customers() {
   };
 
   // --- Render ---
-
   return (
-    <div>
-      {/* Page header */}
-      <div className="mb-24">
+    <div className="animate-fade-in mx-auto max-w-7xl">
+      <div className="mb-32">
         <h1 className="text-h2 font-bold text-text-primary">Customers</h1>
-        <p className="mt-4 text-body-normal text-text-secondary">
+        <p className="mt-8 text-body-normal text-text-secondary">
           View and manage customer details
         </p>
       </div>
 
-      {/* Loading state */}
-      {isLoading && (
-        <p className="text-body-normal text-text-muted">Loading customers...</p>
-      )}
-
-      {/* Fetch error */}
-      {isError && (
-        <div className="rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
+      {isLoading ? (
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-16 rounded-card bg-surface-default shadow-elevation-1 animate-fade-in">
+          <Loader2 className="h-32 w-32 animate-spin text-brand-primary" />
+          <p className="text-body-normal text-text-secondary">Loading customers...</p>
+        </div>
+      ) : isError ? (
+        <div className="rounded-card bg-surface-default p-24 text-center text-body-normal text-danger-main animate-fade-in">
           Failed to load customers. Please refresh the page.
         </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && !isError && customers.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-card border border-border-default bg-surface-default py-48 text-center">
-          <Users className="mb-12 h-40 w-40 text-text-muted" />
-          <p className="text-body-normal font-medium text-text-primary">
+      ) : customers.length === 0 ? (
+        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-card bg-surface-default p-32 shadow-elevation-1 text-center animate-fade-in">
+          <div className="mb-16 flex h-64 w-64 items-center justify-center rounded-full bg-brand-tint">
+            <Users className="h-32 w-32 text-brand-primary" />
+          </div>
+          <h3 className="text-h4 font-semibold text-text-primary">
             No customers yet
-          </p>
-          <p className="mt-4 text-body-small text-text-muted">
-            Customers are created when placing orders
+          </h3>
+          <p className="mt-8 max-w-xs text-body-normal text-text-muted">
+            Customers are created when placing orders.
           </p>
         </div>
-      )}
-
-      {/* Customers table */}
-      {!isLoading && customers.length > 0 && (
-        <div className="rounded-card bg-surface-default shadow-elevation-1 overflow-hidden">
-          <table className="w-full">
+      ) : (
+        <div className="w-full rounded-card bg-surface-default">
+          <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-border-default bg-surface-muted">
-                <th className="px-20 py-12 text-left text-ui-label font-semibold text-text-secondary">
+              <tr className="border-b border-border-default">
+                <th className="min-w-[250px] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap">
                   Customer Name
                 </th>
-                <th className="px-20 py-12 text-left text-ui-label font-semibold text-text-secondary">
+                <th className="min-w-[140px] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap">
                   Phone Number
                 </th>
-                <th className="px-20 py-12 text-left text-ui-label font-semibold text-text-secondary">
+                <th className="w-40 px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap">
                   Date Added
                 </th>
-                <th className="px-20 py-12 text-right text-ui-label font-semibold text-text-secondary">
+                <th className="w-28 px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap">
                   Actions
                 </th>
               </tr>
@@ -112,51 +103,42 @@ export default function Customers() {
               {customers.map((customer, index) => (
                 <tr
                   key={customer.customerId}
-                  className={`border-b border-border-default last:border-0 ${
-                    index % 2 === 0 ? "bg-surface-default" : "bg-surface-muted/40"
-                  }`}
+                  className="border-b border-border-default/50 last:border-0 hover:bg-surface-muted/40 transition-colors duration-150"
+                  style={{ animationDelay: `${index * 30}ms` }}
                 >
-                  <td className="px-20 py-14">
-                    <div className="flex items-center gap-10">
-                      <div className="flex h-32 w-32 items-center justify-center rounded-full bg-brand-tint">
-                        <Users className="h-16 w-16 text-brand-primary" />
-                      </div>
-                      <span className="text-body-normal font-medium text-text-primary">
-                        {customer.customerName}
-                      </span>
-                    </div>
+                  <td className="min-w-[250px] px-6 py-4 font-medium text-text-primary whitespace-nowrap truncate">
+                    {customer.customerName}
                   </td>
-                  <td className="px-20 py-14 text-body-normal text-text-secondary">
+                  <td className="min-w-[140px] px-6 py-4 text-text-secondary whitespace-nowrap">
                     {customer.phoneNumber}
                   </td>
-                  <td className="px-20 py-14 text-body-normal text-text-secondary">
+                  <td className="w-40 px-6 py-4 text-xs text-text-muted whitespace-nowrap">
                     {new Date(customer.createdAt).toLocaleDateString("en-GB", {
                       day: "numeric",
                       month: "short",
                       year: "numeric",
                     })}
                   </td>
-                  <td className="px-20 py-14">
-                    <div className="flex items-center justify-end gap-8">
-                      {/* Edit button */}
-                      <button
-                        onClick={() => handleOpenEdit(customer)}
-                        className="rounded-input p-8 text-text-muted hover:bg-surface-muted hover:text-brand-primary transition-colors duration-200"
-                        aria-label={`Edit ${customer.customerName}`}
-                      >
-                        <Pencil className="h-16 w-16" />
-                      </button>
-
-                      {/* Delete button */}
-                      <button
-                        onClick={() => handleDelete(customer.customerId)}
-                        disabled={isDeleting && deletingId === customer.customerId}
-                        className="rounded-input p-8 text-text-muted hover:bg-danger-bg hover:text-danger-main transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        aria-label={`Delete ${customer.customerName}`}
-                      >
-                        <Trash2 className="h-16 w-16" />
-                      </button>
-                    </div>
+                  <td className="w-28 px-6 py-4 text-right whitespace-nowrap">
+                    <button
+                      onClick={() => handleOpenEdit(customer)}
+                      className="rounded-full p-5 text-text-muted hover:bg-surface-muted hover:text-brand-primary transition-all duration-200 press-scale"
+                      aria-label={`Edit ${customer.customerName}`}
+                    >
+                      <Pencil className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(customer.customerId)}
+                      disabled={isDeleting && deletingId === customer.customerId}
+                      className="rounded-full p-5 text-text-muted hover:bg-danger-bg hover:text-danger-main transition-all duration-200 press-scale disabled:opacity-50 disabled:cursor-not-allowed"
+                      aria-label={`Delete ${customer.customerName}`}
+                    >
+                      {isDeleting && deletingId === customer.customerId ? (
+                        <Loader2 className="w-5 h-5 animate-spin text-danger-main" />
+                      ) : (
+                        <Trash2 className="w-5 h-5" />
+                      )}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -167,7 +149,7 @@ export default function Customers() {
 
       {/* Update error banner */}
       {updateError && (
-        <div className="mt-16 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
+        <div className="mt-16 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main animate-fade-in">
           {updateError.response?.data?.message || "Failed to update customer. Please try again."}
         </div>
       )}

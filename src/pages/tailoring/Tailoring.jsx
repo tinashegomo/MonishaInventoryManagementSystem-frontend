@@ -23,82 +23,77 @@ export default function Tailoring() {
   };
 
   // --- Render ---
-
   return (
-    <div>
+    <div className="animate-fade-in">
       {/* Page header */}
-      <div className="mb-24">
+      <div className="mb-32">
         <h1 className="text-h2 font-bold text-text-primary">Tailoring</h1>
-        <p className="mt-4 text-body-normal text-text-secondary">
+        <p className="mt-8 text-body-normal text-text-secondary">
           Orders currently in production
         </p>
       </div>
 
-      {/* Loading state */}
-      {isLoading && (
-        <p className="text-body-normal text-text-muted">Loading tailoring orders...</p>
-      )}
-
-      {/* Fetch error */}
-      {isError && (
-        <div className="rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
+      {isLoading ? (
+        <div className="flex min-h-[400px] flex-col items-center justify-center gap-16 rounded-card bg-surface-default shadow-elevation-1 animate-fade-in">
+          <Loader2 className="h-32 w-32 animate-spin text-brand-primary" />
+          <p className="text-body-normal text-text-secondary">Loading tailoring orders...</p>
+        </div>
+      ) : isError ? (
+        <div className="rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main animate-fade-in">
           Failed to load orders. Please refresh the page.
         </div>
-      )}
-
-      {/* Empty state */}
-      {!isLoading && !isError && orders.length === 0 && (
-        <div className="flex flex-col items-center justify-center rounded-card border border-border-default bg-surface-default py-48 text-center">
-          <Scissors className="mb-12 h-40 w-40 text-text-muted" />
-          <p className="text-body-normal font-medium text-text-primary">
+      ) : orders.length === 0 ? (
+        <div className="flex min-h-[400px] flex-col items-center justify-center rounded-card bg-surface-default p-32 shadow-elevation-1 text-center animate-fade-in">
+          <div className="mb-16 flex h-64 w-64 items-center justify-center rounded-full bg-brand-tint">
+            <Scissors className="h-32 w-32 text-brand-primary" />
+          </div>
+          <h3 className="text-h4 font-semibold text-text-primary">
             No orders in production
-          </p>
-          <p className="mt-4 text-body-small text-text-muted">
-            Custom orders will appear here when created
+          </h3>
+          <p className="mt-8 max-w-xs text-body-normal text-text-muted">
+            Custom orders will appear here when created.
           </p>
         </div>
-      )}
-
-      {/* Order cards */}
-      {!isLoading && orders.length > 0 && (
-        <div className="space-y-16">
-          {orders.map((order) => {
+      ) : (
+        <div className="space-y-20">
+          {orders.map((order, index) => {
             const isUpdating = updatingId === order.orderId;
             const customItems = order.orderItems.filter((item) => item.customMade);
 
             return (
               <div
                 key={order.orderId}
-                className="rounded-card bg-surface-default p-24 shadow-elevation-1"
+                className="rounded-card bg-surface-default p-24 shadow-elevation-1 hover-lift animate-slide-up"
+                style={{ animationDelay: `${index * 80}ms` }}
               >
-                {/* ─── Order header ─── */}
+                {/* Order header */}
                 <div className="mb-16 flex items-start justify-between">
                   <div>
-                    <p className="text-body-small text-text-muted">Order Number</p>
+                    <p className="text-ui-caption text-text-muted">Order Number</p>
                     <p className="text-body-normal font-semibold text-text-primary">
                       {order.orderNumber}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-body-small text-text-muted">Customer</p>
+                    <p className="text-ui-caption text-text-muted">Customer</p>
                     <p className="text-body-normal font-medium text-text-primary">
                       {order.customerName}
                     </p>
                   </div>
                 </div>
 
-                {/* ─── Custom items ─── */}
+                {/* Custom items */}
                 <div className="mb-16">
-                  <p className="mb-8 text-body-small font-medium text-text-secondary">
+                  <p className="mb-10 text-ui-label font-semibold text-text-secondary">
                     Custom Items ({customItems.length})
                   </p>
-                  <div className="space-y-8">
+                  <div className="space-y-10">
                     {customItems.map((item) => (
                       <div
                         key={item.orderItemId}
-                        className="flex items-center justify-between rounded-input border border-border-default px-16 py-12"
+                        className="flex items-center justify-between rounded-input border border-border-default bg-surface-elevated/50 px-16 py-12"
                       >
-                        <div className="flex items-center gap-16">
+                        <div className="flex items-center gap-12">
                           <div className="flex h-32 w-32 items-center justify-center rounded-full bg-brand-tint">
                             <Package className="h-16 w-16 text-brand-primary" />
                           </div>
@@ -119,18 +114,18 @@ export default function Tailoring() {
                   </div>
                 </div>
 
-                {/* ─── Measurements ─── */}
+                {/* Measurements */}
                 {customItems.some((item) => item.measurements?.length > 0) && (
                   <div className="mb-16">
-                    <p className="mb-8 text-body-small font-medium text-text-secondary">
+                    <p className="mb-10 text-ui-label font-semibold text-text-secondary">
                       Measurements
                     </p>
-                    <div className="rounded-input border border-border-default px-16 py-12">
+                    <div className="rounded-input border border-border-default bg-surface-elevated/30 px-16 py-12">
                       {customItems.map((item) =>
                         item.measurements?.map((m) => (
                           <div
                             key={m.measurementId}
-                            className="flex items-center justify-between py-4"
+                            className="flex items-center justify-between border-b border-border-default last:border-0 py-8"
                           >
                             <span className="text-body-normal text-text-secondary">
                               {m.measurementName}
@@ -145,24 +140,24 @@ export default function Tailoring() {
                   </div>
                 )}
 
-                {/* ─── Order info footer ─── */}
-                <div className="flex items-center justify-between border-t border-border-default pt-16">
+                {/* Order info footer */}
+                <div className="flex flex-col gap-16 sm:flex-row sm:items-center sm:justify-between border-t border-border-default pt-16">
                   <div className="flex items-center gap-24">
                     <div>
-                      <p className="text-body-small text-text-muted">Total</p>
+                      <p className="text-ui-caption text-text-muted">Total</p>
                       <p className="text-body-normal font-semibold text-text-primary">
                         ${order.totalAmount?.toLocaleString()}
                       </p>
                     </div>
                     <div>
-                      <p className="text-body-small text-text-muted">Balance</p>
+                      <p className="text-ui-caption text-text-muted">Balance</p>
                       <p className={`text-body-normal font-semibold ${order.balance > 0 ? "text-danger-main" : "text-success-main"}`}>
                         ${order.balance?.toLocaleString()}
                       </p>
                     </div>
                     {order.collectionDate && (
                       <div>
-                        <p className="text-body-small text-text-muted">Collection</p>
+                        <p className="text-ui-caption text-text-muted">Collection</p>
                         <p className="text-body-normal font-medium text-text-primary">
                           {new Date(order.collectionDate).toLocaleDateString("en-GB", {
                             day: "numeric",
@@ -174,11 +169,10 @@ export default function Tailoring() {
                     )}
                   </div>
 
-                  {/* Mark Ready button */}
                   <button
                     onClick={() => handleMarkReady(order.orderId)}
                     disabled={isUpdating}
-                    className="flex items-center gap-8 rounded-input bg-brand-primary px-20 py-10 text-body-normal font-semibold text-neutral-0 hover:bg-brand-hover active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 transition-colors duration-200"
+                    className="inline-flex items-center justify-center gap-8 rounded-input bg-brand-primary px-14 py-8 text-sm font-semibold text-neutral-0 shadow-elevation-1 hover:bg-brand-hover hover:shadow-elevation-2 active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 press-scale transition-all duration-200"
                   >
                     {isUpdating ? (
                       <>

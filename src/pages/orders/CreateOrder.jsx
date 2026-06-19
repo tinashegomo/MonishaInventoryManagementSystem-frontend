@@ -11,9 +11,9 @@ import OrderItemList from "@/components/order/OrderItemList";
 
 // ─── Style constants ───
 const inputBase =
-  "w-full rounded-input border bg-surface-default px-16 py-12 text-body-normal text-text-primary placeholder-text-muted outline-none transition-colors duration-200";
+  "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
 const inputOk =
-  "border-border-default focus:border-border-focus focus:ring-2 focus:ring-brand-subtle";
+  "border-border-default focus:border-border-focus focus-ring";
 const inputErr =
   "border-danger-main focus:border-danger-hover focus:ring-2 focus:ring-danger-bg";
 const selectWrapper = "relative";
@@ -79,7 +79,6 @@ export default function CreateOrder() {
   // ═══ Submit ═══
   const buildOrderPayload = (data, itemsPayload) => ({
     paidAmount: parseFloat(data.paidAmount),
-    collectionDate: data.collectionDate || null,
     notes: data.notes || null,
     schoolId: data.schoolId || null,
     orderItems: itemsPayload,
@@ -124,19 +123,22 @@ export default function CreateOrder() {
   };
 
   return (
-    <div>
-      {/* ─── Back link ─── */}
+    <div className="animate-fade-in">
+      {/* Back link */}
       <Link
         to="/orders"
-        className="mb-16 inline-flex items-center gap-8 text-body-normal font-medium text-brand-primary hover:text-brand-hover transition-colors duration-200"
+        className="mb-20 inline-flex items-center gap-8 text-body-normal font-medium text-text-secondary hover:text-brand-primary transition-colors duration-200"
       >
         <ArrowLeft className="h-16 w-16" />
         Back to Orders
       </Link>
 
-      {/* ─── Page header ─── */}
-      <div className="mb-24">
+      {/* Page header */}
+      <div className="mb-32">
         <h1 className="text-h2 font-bold text-text-primary">Create Order</h1>
+        <p className="mt-8 text-body-normal text-text-secondary">
+          Create a new customer order
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-24">
@@ -213,19 +215,6 @@ export default function CreateOrder() {
               )}
             </div>
 
-            {/* Collection Date */}
-            <div>
-              <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
-                Collection Date{" "}
-                <span className="text-text-muted">(optional)</span>
-              </label>
-              <input
-                type="date"
-                className={`${inputBase} ${inputOk}`}
-                {...register("collectionDate")}
-              />
-            </div>
-
             {/* Balance preview */}
             <div>
               <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
@@ -283,11 +272,11 @@ export default function CreateOrder() {
             <button
               type="submit"
               disabled={isPending}
-              className="flex items-center justify-center gap-8 rounded-input bg-brand-primary px-32 py-14 text-body-normal font-semibold text-neutral-0 hover:bg-brand-hover active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 transition-colors duration-200"
+              className="inline-flex items-center justify-center gap-8 rounded-input bg-brand-primary px-16 py-8 text-sm font-semibold text-neutral-0 shadow-elevation-1 hover:bg-brand-hover hover:shadow-elevation-2 active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 press-scale transition-all duration-200"
             >
               {isPending ? (
                 <>
-                  <Loader2 className="h-16 w-16 animate-spin" />
+                  <Loader2 className="h-14 w-14 animate-spin" />
                   {isCreatingCustomer
                     ? "Creating customer..."
                     : "Creating order..."}

@@ -35,8 +35,6 @@ export const orderRequestSchema = yup.object({
     .min(0, "Paid amount must be at least 0")
     .required("Paid amount is required"),
 
-  collectionDate: yup.date().optional().nullable(),
-
   notes: yup
     .string()
     .trim()
@@ -50,6 +48,5 @@ export const orderRequestDefaultValues = {
   phoneNumber: "",
   schoolId: "",
   paidAmount: "",
-  collectionDate: null,
   notes: "",
 };

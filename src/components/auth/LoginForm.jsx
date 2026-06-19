@@ -21,16 +21,16 @@ export const LoginForm = ({ handleLogin, isPending }) => {
   });
 
   const inputBase =
-    "w-full rounded-lg border bg-neutral-0 px-4 py-2.5 text-sm text-neutral-900 placeholder-neutral-400 outline-none transition-colors duration-200 dark:bg-neutral-900 dark:text-neutral-0 dark:placeholder-neutral-500";
+    "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
   const inputOk =
-    "border-neutral-200 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 dark:border-neutral-700 dark:focus:border-primary-500 dark:focus:ring-primary-900";
+    "border-border-default focus:border-border-focus focus-ring";
   const inputErr =
-    "border-primary-500 focus:border-primary-600 focus:ring-2 focus:ring-primary-200 dark:border-primary-400 dark:focus:border-primary-400 dark:focus:ring-primary-900";
+    "border-danger-main focus:border-danger-main focus:ring-2 focus:ring-danger-main/20";
 
   return (
-    <form onSubmit={handleSubmit(handleLogin)} className="space-y-5">
+    <form onSubmit={handleSubmit(handleLogin)} className="space-y-20">
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-neutral-700 dark:text-neutral-200">
+        <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
           Email
         </label>
         <input
@@ -42,14 +42,14 @@ export const LoginForm = ({ handleLogin, isPending }) => {
           {...register("email")}
         />
         {errors.email && (
-          <p className="mt-1.5 text-xs font-medium text-primary-600 dark:text-primary-400">
+          <p className="mt-8 text-body-small font-medium text-danger-main">
             {errors.email.message}
           </p>
         )}
       </div>
 
       <div>
-        <label className="mb-1.5 block text-sm font-semibold text-neutral-700 dark:text-neutral-200">
+        <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
           Password
         </label>
         <div className="relative">
@@ -58,24 +58,24 @@ export const LoginForm = ({ handleLogin, isPending }) => {
             autoComplete="current-password"
             placeholder="Enter password"
             aria-invalid={errors.password ? "true" : "false"}
-            className={`${inputBase} pr-10 ${errors.password ? inputErr : inputOk}`}
+            className={`${inputBase} pr-40 ${errors.password ? inputErr : inputOk}`}
             {...register("password")}
           />
           <button
             type="button"
             onClick={() => setShowPassword((s) => !s)}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-600 dark:text-neutral-500 dark:hover:bg-neutral-800 dark:hover:text-neutral-300"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-input p-8 text-text-muted transition-colors hover:bg-surface-muted hover:text-text-primary press-scale"
           >
             {showPassword ? (
-              <EyeOff className="h-4 w-4" />
+              <EyeOff className="h-16 w-16" />
             ) : (
-              <Eye className="h-4 w-4" />
+              <Eye className="h-16 w-16" />
             )}
           </button>
         </div>
         {errors.password && (
-          <p className="mt-1.5 text-xs font-medium text-primary-600 dark:text-primary-400">
+          <p className="mt-8 text-body-small font-medium text-danger-main">
             {errors.password.message}
           </p>
         )}
@@ -84,17 +84,23 @@ export const LoginForm = ({ handleLogin, isPending }) => {
       <button
         type="submit"
         disabled={isPending}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-semibold text-neutral-0 hover:bg-primary-600 active:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-primary-400 dark:active:bg-primary-300"
+        className="flex w-full items-center justify-center gap-8 rounded-input bg-brand-primary px-16 py-8 text-sm font-semibold text-neutral-0 shadow-elevation-1 hover:bg-brand-hover hover:shadow-elevation-2 active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 press-scale transition-all duration-200"
       >
         {isPending ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="h-14 w-14 animate-spin" />
             Logging in...
           </>
         ) : (
           "Sign In"
         )}
       </button>
+
+      <p className="text-center text-body-small text-text-muted">
+        <a href="/forgot-password" className="font-medium text-brand-primary hover:text-brand-hover transition-colors">
+          Forgot password?
+        </a>
+      </p>
     </form>
   );
 };

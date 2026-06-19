@@ -21,10 +21,7 @@ export default function CreateProduct() {
   const { data: existingSchools } = useGetAllSchools();
   const { mutate: createProduct, isPending, isError, error } = useCreateProduct();
 
-  // data  = RHF fields (productName, productPrice, batchId, schoolId, description)
-  // sizes = plain state array [{ size, quantity }, ...]
   const handleCreate = (data, sizes) => {
-    // Merge sizes into payload — backend expects productSizes array
     const payload = { ...data, productSizes: sizes };
 
     createProduct(payload, {
@@ -41,30 +38,30 @@ export default function CreateProduct() {
   const schools = existingSchools || [];
 
   return (
-    <div>
+    <div className="animate-fade-in">
       <Link
         to="/products"
-        className="mb-16 inline-flex items-center gap-8 text-body-normal font-medium text-brand-primary hover:text-brand-hover transition-colors duration-200"
+        className="mb-20 inline-flex items-center gap-8 text-body-normal font-medium text-text-secondary hover:text-brand-primary transition-colors duration-200"
       >
         <ArrowLeft className="h-16 w-16" />
         Back to Products
       </Link>
 
-      <div className="mb-24">
+      <div className="mb-32">
         <h1 className="text-h2 font-bold text-text-primary">Create Product</h1>
-        <p className="mt-4 text-body-normal text-text-secondary">
+        <p className="mt-8 text-body-normal text-text-secondary">
           Allocate a new product from warehouse stock
         </p>
       </div>
 
       {isError && (
-        <div className="mb-20 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main">
+        <div className="mb-20 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main animate-fade-in">
           {error.response?.data?.message ||
             "Failed to create product. Please try again."}
         </div>
       )}
 
-      <div className="rounded-card bg-surface-default p-24 shadow-elevation-1">
+      <div className="rounded-card bg-surface-default p-24 md:p-32 shadow-elevation-1">
         <ProductForm
           onSubmit={handleCreate}
           isPending={isPending}

@@ -2,9 +2,9 @@ import { useState, useMemo } from "react";
 import { UserPlus, Check } from "lucide-react";
 
 const inputBase =
-  "w-full rounded-input border bg-surface-default px-16 py-12 text-body-normal text-text-primary placeholder-text-muted outline-none transition-colors duration-200";
+  "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
 const inputOk =
-  "border-border-default focus:border-border-focus focus:ring-2 focus:ring-brand-subtle";
+  "border-border-default focus:border-border-focus focus-ring";
 const inputErr =
   "border-danger-main focus:border-danger-hover focus:ring-2 focus:ring-danger-bg";
 
@@ -12,12 +12,11 @@ const inputErr =
  * CustomerInput — typeahead with inline new-customer expansion.
  *
  * Shows a dropdown of existing customers as the user types.
- * If no match found, expands inline fields (phone, address) for creating
- * a new customer when the order is saved.
+ * If no match found, expands inline fields for creating a new customer.
  *
  * customerMode: true = existing customer, false = new customer, null = nothing selected yet
  */
-export default function CustomerInput({register,setValue,errors,customers = [],customerMode,setCustomerMode,selectedCustomer,setSelectedCustomer}) {
+export default function CustomerInput({ register, setValue, errors, customers = [], customerMode, setCustomerMode, selectedCustomer, setSelectedCustomer }) {
 
   const [searchText, setSearchText] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -27,10 +26,9 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
     if (!searchText.trim()) return [];
 
     const query = searchText.toLowerCase();
-    return customers.filter((customer) =>customer.customerName.toLowerCase().includes(query));
+    return customers.filter((customer) => customer.customerName.toLowerCase().includes(query));
   }, [customers, searchText]);
 
-  // Select an existing customer from dropdown
   const handleSelect = (customer) => {
     setSelectedCustomer(customer);
     setCustomerMode(true);
@@ -41,14 +39,12 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
     setShowDropdown(false);
   };
 
-  // Switch to new customer mode (no match found)
   const handleCreateNew = () => {
     setCustomerMode(false);
     setValue("customerId", "");
     setShowDropdown(false);
   };
 
-  // Clear selection and reset
   const handleClear = () => {
     setSelectedCustomer(null);
     setCustomerMode(null);
@@ -56,13 +52,11 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
     setValue("phoneNumber", "");
   };
 
-  // Handle input text change — update search text for filtering
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchText(value);
     setShowDropdown(value.trim().length > 0);
 
-    // If user clears the input, reset selection
     if (!value.trim()) {
       handleClear();
     }
@@ -70,7 +64,7 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
 
   return (
     <div className="space-y-12">
-      {/* ─── Customer Name Input ─── */}
+      {/* Customer Name Input */}
       <div>
         <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
           Customer Name
@@ -78,7 +72,6 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
         <div
           className="relative"
           onBlur={(e) => {
-            // Only close if focus leaves the entire wrapper
             if (!e.currentTarget.contains(e.relatedTarget)) {
               setShowDropdown(false);
             }
@@ -94,12 +87,11 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
               register("customerName").onChange(e);
               handleInputChange(e);
             }}
-
           />
 
-          {/* ─── Dropdown: matching existing customers ─── */}
+          {/* Dropdown: matching existing customers */}
           {showDropdown && matchingCustomers.length > 0 && (
-            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-white shadow-lg max-h-200 overflow-y-auto">
+            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 max-h-200 overflow-y-auto animate-scale-in">
               {matchingCustomers.map((customer) => (
                 <div
                   key={customer.customerId}
@@ -133,7 +125,7 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
         )}
       </div>
 
-      {/* ─── Selected existing customer info ─── */}
+      {/* Selected existing customer info */}
       {customerMode === true && selectedCustomer && (
         <div className="rounded-input border border-brand-subtle bg-brand-tint px-16 py-12">
           <div className="flex items-center justify-between">
@@ -148,7 +140,7 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
             <button
               type="button"
               onClick={handleClear}
-              className="text-body-small text-brand-primary hover:text-brand-hover transition-colors"
+              className="rounded-input px-8 py-4 text-body-small font-medium text-brand-primary hover:bg-brand-subtle hover:text-brand-hover transition-colors press-scale"
             >
               Change
             </button>
@@ -156,19 +148,19 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
         </div>
       )}
 
-      {/* ─── No matches found — show "Create new" prompt ─── */}
+      {/* No matches found — show Create new prompt */}
       {customerMode === null && !selectedCustomer && searchText.trim().length > 0 && matchingCustomers.length === 0 && (
-          <button
-            type="button"
-            onClick={handleCreateNew}
-            className="flex w-full items-center gap-10 rounded-input border border-dashed border-brand-subtle bg-brand-tint/50 px-16 py-12 text-body-normal font-medium text-brand-primary hover:bg-brand-tint transition-colors"
-          >
-            <UserPlus className="h-16 w-16" />
-            Create new customer &ldquo;{searchText}&rdquo;
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleCreateNew}
+          className="flex w-full items-center gap-10 rounded-input border border-dashed border-brand-subtle bg-brand-tint/50 px-16 py-12 text-body-normal font-medium text-brand-primary hover:bg-brand-tint transition-all duration-200 press-scale"
+        >
+          <UserPlus className="h-16 w-16" />
+          Create new customer &ldquo;{searchText}&rdquo;
+        </button>
+      )}
 
-      {/* ─── New customer fields (inline expansion) ─── */}
+      {/* New customer fields (inline expansion) */}
       {customerMode === false && (
         <div className="space-y-12 rounded-input border border-brand-subtle bg-brand-tint/30 p-16">
           <div className="flex items-center gap-8">
@@ -179,7 +171,7 @@ export default function CustomerInput({register,setValue,errors,customers = [],c
             <button
               type="button"
               onClick={handleClear}
-              className="ml-auto text-body-small text-brand-primary hover:text-brand-hover transition-colors"
+              className="ml-auto rounded-input px-8 py-4 text-body-small font-medium text-brand-primary hover:bg-brand-subtle hover:text-brand-hover transition-colors press-scale"
             >
               Cancel
             </button>

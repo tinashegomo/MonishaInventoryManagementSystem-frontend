@@ -71,6 +71,7 @@ export const useUpdateUserRole = () => {
     mutationFn: ({ id, userRole }) => inventoryAPI.updateUserRole(id, userRole),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users"] });
+      queryClient.invalidateQueries({ queryKey: ["currentUserRole"] });
     },
     onError: (error) => {
       console.log(error);
@@ -383,5 +384,42 @@ export const useUpdateOrderStatus = () => {
     onError: (error) => {
       console.log(error);
     },
+  });
+};
+
+export const useChangePassword = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ newPassword }) => inventoryAPI.changePassword(newPassword),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+};
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }) => inventoryAPI.updateUser(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+};
+
+export const useGetUserActivity = (id) => {
+  return useQuery({
+    queryKey: ["userActivity", id],
+    queryFn: () => inventoryAPI.getUserActivity(id),
+    enabled: !!id,
   });
 };

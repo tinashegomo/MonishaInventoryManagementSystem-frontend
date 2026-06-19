@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { Trash2, Plus } from "lucide-react";
 
 const inputBase =
-  "w-full rounded-input border bg-surface-default px-16 py-12 text-body-normal text-text-primary placeholder-text-muted outline-none transition-colors duration-200";
+  "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
 const inputOk =
-  "border-border-default focus:border-border-focus focus:ring-2 focus:ring-brand-subtle";
+  "border-border-default focus:border-border-focus focus-ring";
 
 /**
  * OrderItemRow — a single order item with source toggle and fields per type.
@@ -15,7 +15,7 @@ const inputOk =
  *
  * Receives all data and callbacks via props from OrderItemList.
  */
-export default function OrderItemRow({item,index,existingProducts,existingBatches,onManageItem,onManageMeasurement,}) {
+export default function OrderItemRow({ item, index, existingProducts, existingBatches, onManageItem, onManageMeasurement }) {
 
   const availableSizes = useMemo(() => {
     if (item.source === "product" && item.productId) {
@@ -28,21 +28,20 @@ export default function OrderItemRow({item,index,existingProducts,existingBatche
   }, [item.source, item.productId, item.batchId, existingProducts, existingBatches]);
 
   return (
-    <div className="rounded-input border border-border-default p-16 space-y-12">
+    <div className="rounded-input border border-border-default bg-surface-elevated/30 p-16 space-y-12 animate-slide-up">
 
-      {/* ─── Item header: source selector + remove ─── */}
+      {/* Item header: source selector + remove */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-8">
-          {/* Source type toggle: Product / Batch / Custom */}
           {["product", "batch", "custom"].map((src) => (
             <button
               key={src}
               type="button"
               onClick={() => onManageItem("update", index, "source", src)}
-              className={`rounded-input px-12 py-6 text-body-small font-medium transition-colors ${
+              className={`rounded-input px-12 py-6 text-body-small font-medium transition-all duration-200 press-scale ${
                 item.source === src
-                  ? "bg-brand-primary text-neutral-0"
-                  : "bg-surface-muted text-text-secondary hover:bg-surface-muted/80"
+                  ? "bg-brand-primary text-neutral-0 shadow-elevation-1"
+                  : "bg-surface-muted text-text-secondary hover:bg-surface-default hover:text-text-primary"
               }`}
             >
               {src === "product" ? "Product" : src === "batch" ? "Batch" : "Custom"}
@@ -52,14 +51,14 @@ export default function OrderItemRow({item,index,existingProducts,existingBatche
         <button
           type="button"
           onClick={() => onManageItem("remove", index)}
-          className="rounded-input p-8 text-text-muted hover:bg-danger-bg hover:text-danger-main transition-colors"
+          className="rounded-input p-8 text-text-muted hover:bg-danger-bg hover:text-danger-main transition-all duration-200 press-scale"
           aria-label="Remove item"
         >
           <Trash2 className="h-14 w-14" />
         </button>
       </div>
 
-      {/* ─── Product fields ─── */}
+      {/* Product fields */}
       {item.source === "product" && (
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
           <div>
@@ -106,7 +105,7 @@ export default function OrderItemRow({item,index,existingProducts,existingBatche
         </div>
       )}
 
-      {/* ─── Batch fields ─── */}
+      {/* Batch fields */}
       {item.source === "batch" && (
         <div className="grid grid-cols-1 gap-12 md:grid-cols-3">
           <div>
@@ -153,7 +152,7 @@ export default function OrderItemRow({item,index,existingProducts,existingBatche
         </div>
       )}
 
-      {/* ─── Custom fields ─── */}
+      {/* Custom fields */}
       {item.source === "custom" && (
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2">
           <div>
@@ -210,17 +209,17 @@ export default function OrderItemRow({item,index,existingProducts,existingBatche
         </div>
       )}
 
-      {/* ─── Measurements (custom items only) ─── */}
+      {/* Measurements (custom items only) */}
       {item.source === "custom" && (
-        <div className="space-y-8">
+        <div className="rounded-input border border-border-default bg-surface-elevated/30 p-16 space-y-10">
           <label className="flex items-center gap-8 cursor-pointer">
             <input
               type="checkbox"
               checked={item.measurementsTaken}
               onChange={(e) => onManageItem("update", index, "measurementsTaken", e.target.checked)}
-              className="h-14 w-14 rounded border-border-default text-brand-primary focus:ring-brand-subtle"
+              className="h-12 w-12 rounded border-border-default text-brand-primary focus:ring-brand-subtle"
             />
-            <span className="text-body-small font-medium text-text-secondary">Has Measurements</span>
+            <span className="text-xs font-medium text-text-secondary">Has Measurements</span>
           </label>
 
           {item.measurementsTaken && item.measurements.length === 0 && (
@@ -230,32 +229,38 @@ export default function OrderItemRow({item,index,existingProducts,existingBatche
           )}
 
           {item.measurementsTaken && item.measurements.length > 0 && (
-            <div className="space-y-8 rounded-input border border-border-default p-12">
+            <div className="space-y-8 rounded-input border border-border-default bg-surface-default p-12">
+              <div className="grid grid-cols-2 gap-8 px-4">
+                <span className="text-[10px] font-medium text-text-muted uppercase">Name</span>
+                <span className="text-[10px] font-medium text-text-muted uppercase">Value</span>
+              </div>
               {item.measurements.map((m, mIndex) => (
-                <div key={mIndex} className="flex items-center gap-8">
+                <div key={mIndex} className="grid grid-cols-2 gap-8 items-center">
                   <input
                     type="text"
-                    placeholder="Name (e.g. Chest)"
+                    placeholder="e.g. Chest"
                     value={m.measurementName}
                     onChange={(e) => onManageMeasurement("update", index, mIndex, "measurementName", e.target.value)}
-                    className={`${inputBase} flex-1 ${inputOk}`}
+                    className={`${inputBase} ${inputOk}`}
                   />
-                  <input
-                    type="number"
-                    min="0"
-                    placeholder="Value"
-                    value={m.measurementValue}
-                    onChange={(e) => onManageMeasurement("update", index, mIndex, "measurementValue", e.target.value)}
-                    className={`${inputBase} w-100 ${inputOk}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => onManageMeasurement("remove", index, mIndex)}
-                    className="p-8 text-text-muted hover:text-danger-main transition-colors"
-                    aria-label="Remove measurement"
-                  >
-                    <Trash2 className="h-14 w-14" />
-                  </button>
+                  <div className="flex items-center gap-8">
+                    <input
+                      type="number"
+                      min="0"
+                      placeholder="Value"
+                      value={m.measurementValue}
+                      onChange={(e) => onManageMeasurement("update", index, mIndex, "measurementValue", e.target.value)}
+                      className={`${inputBase} min-w-0 ${inputOk}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onManageMeasurement("remove", index, mIndex)}
+                      className="shrink-0 rounded-input p-8 text-text-muted hover:bg-danger-bg hover:text-danger-main transition-colors press-scale"
+                      aria-label="Remove measurement"
+                    >
+                      <Trash2 className="h-14 w-14" />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -265,7 +270,7 @@ export default function OrderItemRow({item,index,existingProducts,existingBatche
             <button
               type="button"
               onClick={() => onManageMeasurement("add", index)}
-              className="flex items-center gap-6 text-body-small font-medium text-brand-primary hover:text-brand-hover transition-colors"
+              className="inline-flex items-center gap-6 rounded-input px-8 py-4 text-body-small font-medium text-brand-primary hover:bg-brand-tint transition-colors press-scale"
             >
               <Plus className="h-12 w-12" />
               Add Measurement
@@ -274,8 +279,8 @@ export default function OrderItemRow({item,index,existingProducts,existingBatche
         </div>
       )}
 
-      {/* ─── Item subtotal ─── */}
-      <div className="text-right text-body-small text-text-muted">
+      {/* Item subtotal */}
+      <div className="text-right text-body-small text-text-muted pt-4">
         Subtotal:{" "}
         <span className="font-medium text-text-primary">
           ${((parseFloat(item.unitPrice) || 0) * (parseInt(item.quantity) || 0)).toLocaleString()}

@@ -98,7 +98,7 @@ const createManageItem = (orderItems, setOrderItems, existingProducts, existingB
   return (operation, index, field, value) => {
     switch (operation) {
       case "add":
-        setOrderItems([...orderItems, {
+        setOrderItems((prev) => [...prev, {
           id: crypto.randomUUID(),
           source: "product",
           productId: "",
@@ -116,11 +116,11 @@ const createManageItem = (orderItems, setOrderItems, existingProducts, existingB
         break;
 
       case "remove":
-        setOrderItems(orderItems.filter((_, i) => i !== index));
+        setOrderItems((prev) => prev.filter((_, i) => i !== index));
         break;
 
       case "update":
-        setOrderItems(orderItems.map((item, i) => {
+        setOrderItems((prev) => prev.map((item, i) => {
           if (i !== index) return item;
 
           let updated = { ...item, [field]: value };
@@ -147,7 +147,7 @@ const createManageMeasurement = (orderItems, setOrderItems) => {
   return (operation, itemIndex, mIndex, field, value) => {
     switch (operation) {
       case "add":
-        setOrderItems(orderItems.map((item, i) =>
+        setOrderItems((prev) => prev.map((item, i) =>
           i === itemIndex
             ? { ...item, measurements: [...item.measurements, { measurementName: "", measurementValue: "" }] }
             : item
@@ -155,7 +155,7 @@ const createManageMeasurement = (orderItems, setOrderItems) => {
         break;
 
       case "remove":
-        setOrderItems(orderItems.map((item, i) =>
+        setOrderItems((prev) => prev.map((item, i) =>
           i === itemIndex
             ? { ...item, measurements: item.measurements.filter((_, j) => j !== mIndex) }
             : item
@@ -163,7 +163,7 @@ const createManageMeasurement = (orderItems, setOrderItems) => {
         break;
 
       case "update":
-        setOrderItems(orderItems.map((item, i) =>
+        setOrderItems((prev) => prev.map((item, i) =>
           i === itemIndex
             ? {
                 ...item,
