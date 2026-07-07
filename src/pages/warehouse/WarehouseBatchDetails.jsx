@@ -1,33 +1,9 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Package, Calendar, User, Hash, Box, Tag } from "lucide-react";
 import { useGetWarehouseBatchById } from "@/hooks/InventoryHooks";
+import { parseDate, formatDate, formatDateTime } from "@/utils/dateUtils";
 
-function parseDate(dateStr) {
-  if (!dateStr) return null;
-  // Handle Jackson LocalDateTime array format: [2026,6,18,10,46]
-  if (Array.isArray(dateStr)) {
-    return new Date(dateStr[0], dateStr[1] - 1, dateStr[2], dateStr[3] || 0, dateStr[4] || 0, dateStr[5] || 0);
-  }
-  return new Date(dateStr);
-}
-
-function formatDate(dateStr) {
-  const d = parseDate(dateStr);
-  if (!d) return "-";
-  return d.toLocaleDateString("en-ZW", { day: "numeric", month: "short", year: "numeric" });
-}
-
-function formatDateTime(dateStr) {
-  const d = parseDate(dateStr);
-  if (!d) return "-";
-  return d.toLocaleDateString("en-ZW", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+// ─── Computed Values ───────────────────────────────────────────
 
 export default function WarehouseBatchDetails() {
   const { batchId } = useParams();
@@ -37,6 +13,8 @@ export default function WarehouseBatchDetails() {
   // Calculate totals from sizes instead of using stale backend values
   const calculatedTotalQty = batch?.batchSizes?.reduce((sum, s) => sum + s.quantity, 0) || 0;
   const calculatedTotalValue = calculatedTotalQty * (batch?.batchPrice || 0);
+
+// ─── Render ────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -68,7 +46,7 @@ export default function WarehouseBatchDetails() {
 
   return (
     <div className="animate-fade-in">
-      {/* Header */}
+      {/* ── Header ─── */}
       <div className="mb-32">
         <button
           onClick={() => navigate("/warehouse")}
@@ -87,7 +65,7 @@ export default function WarehouseBatchDetails() {
         </div>
       </div>
 
-      {/* Info Cards Row */}
+      {/* ── Info Cards Row ─── */}
       <div className="grid grid-cols-1 gap-16 md:grid-cols-2 mb-24">
         {/* Batch Info Card */}
         <div className="rounded-card bg-surface-default p-20 shadow-elevation-1">
@@ -128,7 +106,7 @@ export default function WarehouseBatchDetails() {
         </div>
       </div>
 
-      {/* Sizes Card */}
+      {/* ── Sizes Card ─── */}
       {batch.batchSizes && batch.batchSizes.length > 0 && (
         <div className="rounded-card bg-surface-default p-20 shadow-elevation-1 mb-24">
           <div className="flex items-center gap-10 mb-16">
@@ -159,7 +137,7 @@ export default function WarehouseBatchDetails() {
         </div>
       )}
 
-      {/* Metadata Card */}
+      {/* ── Metadata Card ─── */}
       <div className="rounded-card bg-surface-default p-20 shadow-elevation-1 mb-24">
         <div className="flex items-center gap-10 mb-16">
           <div className="flex h-40 w-40 items-center justify-center rounded-full bg-purple-50">
@@ -188,7 +166,7 @@ export default function WarehouseBatchDetails() {
         </div>
       </div>
 
-      {/* Products Section */}
+      {/* ── Products Section ─── */}
       <div className="rounded-card bg-surface-default p-20 shadow-elevation-1">
         <div className="flex items-center gap-10 mb-16">
           <div className="flex h-40 w-40 items-center justify-center rounded-full bg-sky-50">
@@ -251,6 +229,8 @@ export default function WarehouseBatchDetails() {
     </div>
   );
 }
+
+// ─── Sub-Components ────────────────────────────────────────────
 
 function InfoRow({ label, value, icon, mono }) {
   return (

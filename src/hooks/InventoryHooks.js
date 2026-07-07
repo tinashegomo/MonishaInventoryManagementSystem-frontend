@@ -93,6 +93,43 @@ export const useDeleteUser = () => {
   });
 };
 
+export const useChangePassword = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ newPassword }) => inventoryAPI.changePassword(newPassword),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+};
+
+export const useUpdateUser = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, data }) => inventoryAPI.updateUser(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
+      queryClient.invalidateQueries({ queryKey: ["users"] });
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
+};
+
+export const useGetUserActivity = (id) => {
+  return useQuery({
+    queryKey: ["userActivity", id],
+    queryFn: () => inventoryAPI.getUserActivity(id),
+    enabled: !!id,
+  });
+};
+
 /* SCHOOL HOOKS */
 
 export const useGetAllSchools = () => {
@@ -260,7 +297,7 @@ export const useAddSizesToBatch = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ batchId, sizes }) => inventoryAPI.addSizesToBatch({ batchId, sizes }),
+    mutationFn: ({ batchId, sizes }) => inventoryAPI.addSizesToBatch(batchId, sizes),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["warehouseBatches"] });
     },
@@ -316,12 +353,22 @@ export const useDeleteProduct = () => {
   });
 };
 
+// ─── Helpers ──────────────────────────────────────────────────
+
+// Sort orders by createdAt descending (most recent first).
+// Used by useGetAllOrders and useGetOrdersByStatus.
+const sortByRecent = (orders) => {
+  if (!orders) return [];
+  return [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+};
+
 /* ORDER HOOKS */
 
 export const useGetAllOrders = () => {
   return useQuery({
     queryKey: ["orders"],
     queryFn: () => inventoryAPI.getAllOrders(),
+    select: sortByRecent,
   });
 };
 
@@ -356,6 +403,7 @@ export const useGetOrdersByStatus = (status) => {
     queryFn: () => inventoryAPI.getOrdersByStatus(status),
     enabled: !!status,
     placeholderData: (previousData) => previousData,
+    select: sortByRecent,
   });
 };
 
@@ -387,39 +435,3 @@ export const useUpdateOrderStatus = () => {
   });
 };
 
-export const useChangePassword = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ newPassword }) => inventoryAPI.changePassword(newPassword),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-    },
-    onError: (error) => {
-      console.log(error);
-    },
-  });
-};
-
-export const useUpdateUser = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ id, data }) => inventoryAPI.updateUser(id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["currentUser"] });
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-    },
-    onError: (error) => {
-      console.log(error);
-    },
-  });
-};
-
-export const useGetUserActivity = (id) => {
-  return useQuery({
-    queryKey: ["userActivity", id],
-    queryFn: () => inventoryAPI.getUserActivity(id),
-    enabled: !!id,
-  });
-};

@@ -17,13 +17,86 @@ export const STATUS_C = {
 
 export const PALETTE = [C.brand, C.success, C.warning, C.info, C.purple, C.slate];
 
-/* ── Helpers ── */
-export const fmt$ = (v) => v == null ? "$0" : "$" + Number(v).toLocaleString();
-export const fmtD = (d) => d ? new Date(d).toLocaleDateString("en-GB", { day: "numeric", month: "short" }) : "—";
-export const withinDays = (d, n) => { if (!d) return false; const t = new Date(d), now = new Date(); return t >= now && (t - now) / 864e5 <= n; };
-export const gCount = (a, k) => a.reduce((r, i) => { const v = i[k] || "Unknown"; r[v] = (r[v] || 0) + 1; return r; }, {});
-export const gSum = (a, g, s) => a.reduce((r, i) => { const v = i[g] || "Unknown"; r[v] = (r[v] || 0) + (i[s] || 0); return r; }, {});
-export const wk = (n, o) => { const r = [], now = new Date(); for (let i = n - 1; i >= 0; i--) { const s = new Date(now); s.setDate(now.getDate() - now.getDay() - i * 7); s.setHours(0, 0, 0, 0); const e = new Date(s); e.setDate(s.getDate() + 6); e.setHours(23, 59, 59, 999); r.push({ w: s.toLocaleDateString("en-GB", { day: "numeric", month: "short" }), n: o.filter(x => { const d = new Date(x.createdAt); return d >= s && d <= e; }).length }); } return r; };
+/* ── Helpers ────────────────────────────────────────────────────── */
+
+// Format a number as currency (e.g., 1500 → "$1,500"). Returns "$0" for null/undefined.
+export const formatCurrency = (value) => {
+  if (value == null) return "$0";
+  return "$" + Number(value).toLocaleString();
+};
+
+// Format a date as short display (e.g., "2026-07-03" → "3 Jul"). No year. Returns "—" if missing.
+// NOTE: intentionally different from dateUtils.formatDate which includes the year.
+export const formatShortDate = (dateStr) => {
+  if (!dateStr) return "—";
+  return new Date(dateStr).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+};
+
+// Check if a date falls within the next N days from today (inclusive).
+// Used for "upcoming collections" panel — shows orders due soon.
+export const isWithinDays = (dateStr, numberOfDays) => {
+  if (!dateStr) return false;
+  const targetDate = new Date(dateStr);
+  const today = new Date();
+  const millisecondsPerDay = 864e5; // 24 * 60 * 60 * 1000
+  return targetDate >= today && (targetDate - today) / millisecondsPerDay <= numberOfDays;
+};
+
+// Count how many items share the same value for a given key.
+// Example: gCount(orders, "orderStatus") → { PENDING: 3, COMPLETED: 12 }
+// Used for the order status donut chart.
+export const groupCount = (items, key) => {
+  return items.reduce((result, item) => {
+    const value = item[key] || "Unknown";
+    result[value] = (result[value] || 0) + 1;
+    return result;
+  }, {});
+};
+
+// Sum a numeric field, grouped by another field.
+// Example: gSum(batches, "type", "totalQuantity") → { Shirts: 150, Trousers: 80 }
+// Used for the stock-by-type progress bars.
+export const groupSum = (items, groupKey, sumKey) => {
+  return items.reduce((result, item) => {
+    const group = item[groupKey] || "Unknown";
+    result[group] = (result[group] || 0) + (item[sumKey] || 0);
+    return result;
+  }, {});
+};
+
+// Generate weekly trend data for the last N weeks.
+// Returns an array like [{ w: "23 Jun", n: 5 }, { w: "30 Jun", n: 8 }, ...]
+// where "w" is the week label and "n" is the order count for that week.
+// Used for the orders-over-time line chart.
+export const getWeeklyTrend = (numberOfWeeks, orders) => {
+  const result = [];
+  const now = new Date();
+
+  for (let i = numberOfWeeks - 1; i >= 0; i--) {
+    // Calculate the start of this week (Monday)
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay() - i * 7);
+    weekStart.setHours(0, 0, 0, 0);
+
+    // Calculate the end of this week (Sunday)
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+
+    // Count orders created within this week
+    const ordersThisWeek = orders.filter(order => {
+      const orderDate = new Date(order.createdAt);
+      return orderDate >= weekStart && orderDate <= weekEnd;
+    }).length;
+
+    result.push({
+      w: formatShortDate(weekStart), // week label (e.g., "23 Jun")
+      n: ordersThisWeek,             // order count for this week
+    });
+  }
+
+  return result;
+};
 
 /* ── Tooltip ── */
 export function Tip({ active, payload, label }) {

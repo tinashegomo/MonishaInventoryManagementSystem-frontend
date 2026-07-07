@@ -11,23 +11,30 @@ const inputErr =
 /**
  * CustomerInput — typeahead with inline new-customer expansion.
  *
- * Shows a dropdown of existing customers as the user types.
+ * Shows a popover of existing customers as the user types.
  * If no match found, expands inline fields for creating a new customer.
  *
- * customerMode: true = existing customer, false = new customer, null = nothing selected yet
+ * customerMode: true = existing customer, false = new customer, null = nothing selected
+ *
+ * Uses the HTML5 Popover API for the search results dropdown.
+ * - Input: `popovertarget="customer-typeahead"`
+ * - Dropdown: `id="customer-typeahead" popover="auto"`
+ * - Light-dismiss handles closing when clicking outside
  */
 export default function CustomerInput({ register, setValue, errors, customers = [], customerMode, setCustomerMode, selectedCustomer, setSelectedCustomer }) {
 
+  // ─── State ──────────────────────────────────────────────────
   const [searchText, setSearchText] = useState("");
-  const [showDropdown, setShowDropdown] = useState(false);
 
+  // ─── Computed Values ────────────────────────────────────────
   // Filter customers by name (case-insensitive contains)
   const matchingCustomers = useMemo(() => {
     if (!searchText.trim()) return [];
-
     const query = searchText.toLowerCase();
     return customers.filter((customer) => customer.customerName.toLowerCase().includes(query));
   }, [customers, searchText]);
+
+  // ─── Functions ──────────────────────────────────────────────
 
   const handleSelect = (customer) => {
     setSelectedCustomer(customer);
@@ -36,13 +43,15 @@ export default function CustomerInput({ register, setValue, errors, customers = 
     setValue("customerId", customer.customerId);
     setValue("phoneNumber", "");
     setSearchText("");
-    setShowDropdown(false);
+    // Close the popover after selection
+    document.getElementById("customer-typeahead")?.hidePopover();
   };
 
   const handleCreateNew = () => {
     setCustomerMode(false);
     setValue("customerId", "");
-    setShowDropdown(false);
+    // Close the popover — the "Create new customer" button itself closes it
+    document.getElementById("customer-typeahead")?.hidePopover();
   };
 
   const handleClear = () => {
@@ -55,33 +64,28 @@ export default function CustomerInput({ register, setValue, errors, customers = 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchText(value);
-    setShowDropdown(value.trim().length > 0);
-
-    if (!value.trim()) {
-      handleClear();
-    }
+    // Don't manually show the popover — the user is typing in the input,
+    // and the popover opens via popovertarget. We just need to update the
+    // filtered list so the popover content reflects the search.
   };
 
+  // ─── Render ─────────────────────────────────────────────────
   return (
     <div className="space-y-12">
-      {/* Customer Name Input */}
+
+      {/* ── Customer Name Input ─────────────────────────────────── */}
       <div>
         <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
           Customer Name
         </label>
-        <div
-          className="relative"
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget)) {
-              setShowDropdown(false);
-            }
-          }}
-        >
+        <div className="relative">
+          {/* Input with popover trigger — typing here opens the search results. */}
           <input
             type="text"
             placeholder="Type customer name..."
             aria-invalid={errors.customerName ? "true" : "false"}
             className={`${inputBase} ${errors.customerName ? inputErr : inputOk}`}
+            popovertarget="customer-typeahead"
             {...register("customerName")}
             onChange={(e) => {
               register("customerName").onChange(e);
@@ -89,16 +93,18 @@ export default function CustomerInput({ register, setValue, errors, customers = 
             }}
           />
 
-          {/* Dropdown: matching existing customers */}
-          {showDropdown && matchingCustomers.length > 0 && (
-            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 max-h-200 overflow-y-auto animate-scale-in">
+          {/* Search results popover — only shown when there are matches. */}
+          {/* `popover="auto"` enables light-dismiss and top-layer rendering. */}
+          {matchingCustomers.length > 0 && (
+            <div
+              id="customer-typeahead"
+              popover="auto"
+              className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 max-h-200 overflow-y-auto animate-scale-in"
+            >
               {matchingCustomers.map((customer) => (
                 <div
                   key={customer.customerId}
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    handleSelect(customer);
-                  }}
+                  onClick={() => handleSelect(customer)}
                   className="flex w-full items-center justify-between px-16 py-10 cursor-pointer hover:bg-surface-muted transition-colors"
                 >
                   <div>
@@ -125,7 +131,7 @@ export default function CustomerInput({ register, setValue, errors, customers = 
         )}
       </div>
 
-      {/* Selected existing customer info */}
+      {/* ── Selected Existing Customer Info ─────────────────────── */}
       {customerMode === true && selectedCustomer && (
         <div className="rounded-input border border-brand-subtle bg-brand-tint px-16 py-12">
           <div className="flex items-center justify-between">
@@ -148,7 +154,7 @@ export default function CustomerInput({ register, setValue, errors, customers = 
         </div>
       )}
 
-      {/* No matches found — show Create new prompt */}
+      {/* ── Create New Customer Prompt ──────────────────────────── */}
       {customerMode === null && !selectedCustomer && searchText.trim().length > 0 && matchingCustomers.length === 0 && (
         <button
           type="button"
@@ -160,7 +166,7 @@ export default function CustomerInput({ register, setValue, errors, customers = 
         </button>
       )}
 
-      {/* New customer fields (inline expansion) */}
+      {/* ── New Customer Fields (Inline Expansion) ──────────────── */}
       {customerMode === false && (
         <div className="space-y-12 rounded-input border border-brand-subtle bg-brand-tint/30 p-16">
           <div className="flex items-center gap-8">

@@ -1,31 +1,16 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Package, Tag, Box, School, Hash, Calendar, User } from "lucide-react";
 import { useGetProductById } from "@/hooks/InventoryHooks";
+import { parseDate, formatDateTime } from "@/utils/dateUtils";
 
-function parseDate(dateStr) {
-  if (!dateStr) return null;
-  if (Array.isArray(dateStr)) {
-    return new Date(dateStr[0], dateStr[1] - 1, dateStr[2], dateStr[3] || 0, dateStr[4] || 0, dateStr[5] || 0);
-  }
-  return new Date(dateStr);
-}
-
-function formatDateTime(dateStr) {
-  const d = parseDate(dateStr);
-  if (!d) return "-";
-  return d.toLocaleDateString("en-ZW", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
+// ─── Component ─────────────────────────────────────────────────
 
 export default function ProductDetails() {
   const { productId } = useParams();
   const navigate = useNavigate();
   const { data: product, isLoading, isError, error } = useGetProductById(productId);
+
+// ─── Render ────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -57,7 +42,7 @@ export default function ProductDetails() {
 
   return (
     <div className="animate-fade-in">
-      {/* Header */}
+      {/* ── Header ─── */}
       <div className="mb-32">
         <button
           onClick={() => navigate("/products")}
@@ -76,7 +61,7 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      {/* Info Cards Row */}
+      {/* ── Info Cards Row ─── */}
       <div className="grid grid-cols-1 gap-16 md:grid-cols-2 mb-24">
         {/* Product Info Card */}
         <div className="rounded-card bg-surface-default p-20 shadow-elevation-1">
@@ -117,7 +102,7 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      {/* Sizes Card */}
+      {/* ── Sizes Card ─── */}
       {product.productSizes && product.productSizes.length > 0 && (
         <div className="rounded-card bg-surface-default p-20 shadow-elevation-1 mb-24">
           <div className="flex items-center gap-10 mb-16">
@@ -147,7 +132,7 @@ export default function ProductDetails() {
         </div>
       )}
 
-      {/* Metadata Card */}
+      {/* ── Metadata Card ─── */}
       <div className="rounded-card bg-surface-default p-20 shadow-elevation-1 mb-24">
         <div className="flex items-center gap-10 mb-16">
           <div className="flex h-40 w-40 items-center justify-center rounded-full bg-purple-50">
@@ -181,7 +166,7 @@ export default function ProductDetails() {
         </div>
       </div>
 
-      {/* Description Card */}
+      {/* ── Description Card ─── */}
       {product.description && (
         <div className="rounded-card bg-surface-default p-20 shadow-elevation-1">
           <h2 className="text-lg font-semibold text-text-primary mb-12">Description</h2>
@@ -191,6 +176,8 @@ export default function ProductDetails() {
     </div>
   );
 }
+
+// ─── Sub-Components ────────────────────────────────────────────
 
 function InfoRow({ label, value, icon, mono }) {
   return (

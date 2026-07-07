@@ -1,23 +1,20 @@
 import { Trash2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { parseDate, formatDate } from "@/utils/dateUtils";
 
-function parseDate(dateStr) {
-  if (!dateStr) return null;
-  if (Array.isArray(dateStr)) {
-    return new Date(dateStr[0], dateStr[1] - 1, dateStr[2], dateStr[3] || 0, dateStr[4] || 0, dateStr[5] || 0);
-  }
-  return new Date(dateStr);
-}
+// ─── Helpers ──────────────────────────────────────────────────
 
-function formatDate(dateStr) {
-  const d = parseDate(dateStr);
-  if (!d) return "-";
-  return d.toLocaleDateString("en-ZW", { day: "numeric", month: "short", year: "numeric" });
-}
+const getTotalQty = (batch) => batch.batchSizes?.reduce((sum, s) => sum + s.quantity, 0) || batch.totalQuantity || 0;
+const getTotalValue = (batch) => getTotalQty(batch) * (batch.batchPrice || 0);
+
+// ─── Component ────────────────────────────────────────────────
 
 export const WarehouseBatchList = ({ batches, setSelectedItem }) => {
+
+  // ─── Hooks ────────────────────────────────────────────────────
   const navigate = useNavigate();
 
+  // ─── Render ───────────────────────────────────────────────────
   return (
     <div className="w-full rounded-card bg-surface-default">
       <table className="w-full text-sm">
@@ -37,9 +34,6 @@ export const WarehouseBatchList = ({ batches, setSelectedItem }) => {
         </thead>
         <tbody>
           {batches.map((batch, index) => {
-            const totalQty = batch.batchSizes?.reduce((sum, s) => sum + s.quantity, 0) || batch.totalQuantity || 0;
-            const totalValue = totalQty * (batch.batchPrice || 0);
-
             return (
               <tr
                 key={batch.batchId}
@@ -59,13 +53,13 @@ export const WarehouseBatchList = ({ batches, setSelectedItem }) => {
                   {batch.color}
                 </td>
                 <td className="w-24 px-6 py-4 text-text-primary text-right whitespace-nowrap tabular-nums">
-                  {totalQty}
+                  {getTotalQty(batch)}
                 </td>
                 <td className="w-32 px-6 py-4 text-text-secondary text-right whitespace-nowrap tabular-nums">
                   ${batch.batchPrice?.toLocaleString()}
                 </td>
                 <td className="w-32 px-6 py-4 font-medium text-text-primary text-right whitespace-nowrap tabular-nums">
-                  ${totalValue.toLocaleString()}
+                  ${getTotalValue(batch).toLocaleString()}
                 </td>
                 <td className="w-40 px-6 py-4 text-xs text-text-muted whitespace-nowrap">
                   {formatDate(batch.createdAt)}

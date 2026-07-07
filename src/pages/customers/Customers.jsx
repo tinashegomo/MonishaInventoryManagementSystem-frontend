@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useMemo } from "react";
 import { Pencil, Trash2, Users, Loader2 } from "lucide-react";
 import {
   useGetAllCustomers,
@@ -6,23 +6,31 @@ import {
   useDeleteCustomer,
 } from "@/hooks/InventoryHooks";
 import { CustomerModal } from "@/components/customer/CustomerModal";
+import { formatDate } from "@/utils/dateUtils";
 
 /**
  * Customers — read-only list page with edit and delete.
  * Creation is done during order creation (CustomerInput in CreateOrder).
  */
 export default function Customers() {
-  // --- Modal state ---
+  // ─── State ────────────────────────────────────────────────────
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
+  const customerDialogRef = useRef(null);
 
-  // --- Data & mutations ---
+  // ─── Data & Mutations ────────────────────────────────────────
   const { data: customers = [], isLoading, isError } = useGetAllCustomers();
   const { mutate: updateCustomer, isPending: isUpdating, error: updateError } = useUpdateCustomer();
   const { mutate: deleteCustomer, isPending: isDeleting } = useDeleteCustomer();
 
-  // --- Handlers ---
+  // Sort customers by createdAt descending (most recent first)
+  const sortedCustomers = useMemo(() => {
+    if (!customers) return [];
+    return [...customers].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [customers]);
+
+  // ─── Functions ───────────────────────────────────────────────
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedCustomer(null);
@@ -49,9 +57,10 @@ export default function Customers() {
     });
   };
 
-  // --- Render ---
+  // ─── Render ──────────────────────────────────────────────────
   return (
     <div className="animate-fade-in mx-auto max-w-7xl">
+      {/* ── Page Header ───────────────────────────────────────── */}
       <div className="mb-32">
         <h1 className="text-h2 font-bold text-text-primary">Customers</h1>
         <p className="mt-8 text-body-normal text-text-secondary">
@@ -59,6 +68,7 @@ export default function Customers() {
         </p>
       </div>
 
+      {/* ── Customer List / States ────────────────────────────── */}
       {isLoading ? (
         <div className="flex min-h-[400px] flex-col items-center justify-center gap-16 rounded-card bg-surface-default shadow-elevation-1 animate-fade-in">
           <Loader2 className="h-32 w-32 animate-spin text-brand-primary" />
@@ -68,7 +78,7 @@ export default function Customers() {
         <div className="rounded-card bg-surface-default p-24 text-center text-body-normal text-danger-main animate-fade-in">
           Failed to load customers. Please refresh the page.
         </div>
-      ) : customers.length === 0 ? (
+      ) : sortedCustomers.length === 0 ? (
         <div className="flex min-h-[400px] flex-col items-center justify-center rounded-card bg-surface-default p-32 shadow-elevation-1 text-center animate-fade-in">
           <div className="mb-16 flex h-64 w-64 items-center justify-center rounded-full bg-brand-tint">
             <Users className="h-32 w-32 text-brand-primary" />
@@ -81,6 +91,7 @@ export default function Customers() {
           </p>
         </div>
       ) : (
+        /* ── Customers Table ──────────────────────────────────── */
         <div className="w-full rounded-card bg-surface-default">
           <table className="w-full text-sm">
             <thead>
@@ -100,7 +111,7 @@ export default function Customers() {
               </tr>
             </thead>
             <tbody>
-              {customers.map((customer, index) => (
+              {sortedCustomers.map((customer, index) => (
                 <tr
                   key={customer.customerId}
                   className="border-b border-border-default/50 last:border-0 hover:bg-surface-muted/40 transition-colors duration-150"
@@ -113,11 +124,7 @@ export default function Customers() {
                     {customer.phoneNumber}
                   </td>
                   <td className="w-40 px-6 py-4 text-xs text-text-muted whitespace-nowrap">
-                    {new Date(customer.createdAt).toLocaleDateString("en-GB", {
-                      day: "numeric",
-                      month: "short",
-                      year: "numeric",
-                    })}
+                    {formatDate(customer.createdAt)}
                   </td>
                   <td className="w-28 px-6 py-4 text-right whitespace-nowrap">
                     <button
@@ -147,16 +154,17 @@ export default function Customers() {
         </div>
       )}
 
-      {/* Update error banner */}
+      {/* ── Update Error Banner ───────────────────────────────── */}
       {updateError && (
         <div className="mt-16 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main animate-fade-in">
           {updateError.response?.data?.message || "Failed to update customer. Please try again."}
         </div>
       )}
 
-      {/* Edit modal */}
+      {/* ── Edit Modal ────────────────────────────────────────── */}
       <CustomerModal
         key={selectedCustomer?.customerId}
+        dialogRef={customerDialogRef}
         isOpen={isModalOpen}
         onClose={handleCloseModal}
         onSubmit={handleUpdate}

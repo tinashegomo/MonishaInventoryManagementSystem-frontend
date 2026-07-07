@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useRef, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Loader2, Shield, Eye, MoreVertical } from "lucide-react";
 import { useGetAllUsers, useGetAllOrders, useUpdateUserRole, useDeleteUser, useGetCurrentUserRole } from "@/hooks/InventoryHooks";
 import ConfirmUserDeleteModal from "./ConfirmUserDeleteModal";
+import { formatDate } from "@/utils/dateUtils";
 
 const ROLE_OPTIONS = ["USER", "MANAGER", "ADMIN"];
 
@@ -13,6 +14,15 @@ const ROLE_COLORS = {
 };
 
 export default function Users() {
+  // ─── State ──────────────────────────────────────────────────
+  // We store the dynamic pixel coordinates of the clicked 3-dot button.
+  // Since only one popover can be open at a time (thanks to popover="auto"),
+  // we only need a single state object to position the active popover.
+  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
+  const [selectedUser, setSelectedUser] = useState(null);
+  const deleteUserDialogRef = useRef(null);
+
+  // ─── Hooks ──────────────────────────────────────────────────
   const navigate = useNavigate();
   const { data: users, isLoading, isError, error } = useGetAllUsers();
   const { data: orders = [] } = useGetAllOrders();
@@ -20,45 +30,39 @@ export default function Users() {
   const { mutate: updateUserRole } = useUpdateUserRole();
   const { mutate: deleteUser, isPending: isDeleting } = useDeleteUser();
 
-  const [openMenu, setOpenMenu] = useState(null);
-  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
-  const [selectedUser, setSelectedUser] = useState(null);
-  const menuRef = useRef(null);
-  const btnRefs = useRef({});
+  // Sort users by createdAt descending (most recent first)
+  const sortedUsers = useMemo(() => {
+    if (!users) return [];
+    return [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  }, [users]);
 
-  const handleOpenMenu = (userId) => {
-    if (openMenu === userId) {
-      setOpenMenu(null);
-      return;
-    }
-    const btn = btnRefs.current[userId];
-    if (btn) {
-      const rect = btn.getBoundingClientRect();
-      setMenuPos({ top: rect.bottom + 4, left: rect.right - 224 }); // matches w-56
-    }
-    setOpenMenu(userId);
+  // ─── Functions ──────────────────────────────────────────────
+  const handleOpenMenu = (e) => {
+    // e.currentTarget is the button that was clicked.
+    // getBoundingClientRect() gives us its exact position on the viewport.
+    const rect = e.currentTarget.getBoundingClientRect();
+    
+    // Position the popover slightly below the clicked button, accounting for page scroll.
+    setMenuPos({
+      top: rect.bottom + window.scrollY + 4,
+      left: rect.right - 224 + window.scrollX, // 224px matches the w-56 width of our dropdown
+    });
   };
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setOpenMenu(null);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const handleRoleChange = (userId, newRole) => {
     updateUserRole({ id: userId, userRole: newRole });
-    setOpenMenu(null);
+    // After performing the action, manually close the native popover
+    const popover = document.getElementById(`menu-${userId}`);
+    if (popover) {
+      popover.hidePopover();
+    }
   };
 
   const handleDeleteConfirm = () => {
     if (!selectedUser) return;
     deleteUser(selectedUser.userId, {
-      onSuccess: () => setSelectedUser(null),
-      onError: () => setSelectedUser(null),
+      onSuccess: () => { setSelectedUser(null); deleteUserDialogRef.current?.close(); },
+      onError: () => { setSelectedUser(null); deleteUserDialogRef.current?.close(); },
     });
   };
 
@@ -66,9 +70,11 @@ export default function Users() {
     return orders.filter(o => o.createdBy === userName).length;
   };
 
+  // ─── Render ─────────────────────────────────────────────────
   if (currentRole !== "ADMIN") {
     return (
       <div className="animate-fade-in">
+        {/* ── Access Denied ─── */}
         <div className="flex min-h-[400px] flex-col items-center justify-center rounded-card bg-surface-default p-32 shadow-elevation-1 text-center">
           <Shield className="h-32 w-32 text-text-muted mb-16" />
           <h3 className="text-h4 font-semibold text-text-primary">Access Denied</h3>
@@ -80,6 +86,7 @@ export default function Users() {
 
   return (
     <div className="animate-fade-in mx-auto max-w-7xl">
+      {/* ── Page Header ─── */}
       <div className="mb-32 flex flex-col gap-16 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-h2 font-bold text-text-primary">User Management</h1>
@@ -89,12 +96,14 @@ export default function Users() {
         </div>
       </div>
 
+      {/* ── Error Banner ─── */}
       {isError && (
         <div className="mb-20 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main animate-fade-in">
           {error.response?.data?.message || "Failed to load users."}
         </div>
       )}
 
+      {/* ── Loading State ─── */}
       {isLoading && (
         <div className="flex min-h-[400px] flex-col items-center justify-center gap-16 rounded-card bg-surface-default shadow-elevation-1 animate-fade-in">
           <Loader2 className="h-32 w-32 animate-spin text-brand-primary" />
@@ -102,14 +111,16 @@ export default function Users() {
         </div>
       )}
 
-      {!isLoading && !isError && users && users.length === 0 && (
+      {/* ── Empty State ─── */}
+      {!isLoading && !isError && sortedUsers.length === 0 && (
         <div className="flex min-h-[400px] flex-col items-center justify-center rounded-card bg-surface-default p-32 shadow-elevation-1 text-center animate-fade-in">
           <Shield className="h-32 w-32 text-brand-primary mb-16" />
           <h3 className="text-h4 font-semibold text-text-primary">No users yet</h3>
         </div>
       )}
 
-      {!isLoading && users && users.length > 0 && (
+      {/* ── Users Table ─── */}
+      {!isLoading && sortedUsers.length > 0 && (
         <div className="w-full rounded-card bg-surface-default overflow-visible">
           <table className="w-full text-sm">
             <thead>
@@ -124,7 +135,7 @@ export default function Users() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
+              {sortedUsers.map((u) => (
                 <tr
                   key={u.userId}
                   className="border-b border-border-default/50 last:border-b-0 hover:bg-surface-muted/40 transition-colors duration-150"
@@ -145,10 +156,11 @@ export default function Users() {
                     {getOrderCount(u.userName)}
                   </td>
                   <td className="w-36 px-6 py-4 text-xs text-text-muted whitespace-nowrap">
-                    {u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+                    {formatDate(u.createdAt)}
                   </td>
                   <td className="w-20 px-6 py-4 text-right whitespace-nowrap">
                     <div className="flex items-center justify-end gap-4">
+                      {/* View details */}
                       <button
                         onClick={() => navigate(`/admin/users/${u.userId}`)}
                         className="rounded-full p-5 text-text-muted hover:bg-brand-subtle hover:text-brand-primary transition-all duration-200 press-scale"
@@ -156,14 +168,55 @@ export default function Users() {
                       >
                         <Eye className="w-5 h-5" />
                       </button>
+
+                      {/* Action trigger button using Popover Target */}
                       <button
-                        ref={(el) => { btnRefs.current[u.userId] = el; }}
-                        onClick={() => handleOpenMenu(u.userId)}
+                        popovertarget={`menu-${u.userId}`}
+                        onMouseDown={(e) => e.preventDefault()} // prevent focus leaving
+                        onClick={handleOpenMenu} // set location dynamically
                         className="rounded-full p-5 text-text-muted hover:bg-surface-muted hover:text-text-primary transition-all duration-200 press-scale"
                         aria-label="Actions"
                       >
                         <MoreVertical className="w-5 h-5" />
                       </button>
+
+                      {/* Native HTML5 Popover Menu */}
+                      {/* popover="auto" makes the menu render in the "Top Layer" completely outside */}
+                      {/* the normal page flow, escaping any overflow clipping from the table. */}
+                      <div
+                        id={`menu-${u.userId}`}
+                        popover="auto"
+                        style={{
+                          position: "absolute",
+                          top: menuPos.top,
+                          left: menuPos.left,
+                          margin: 0,
+                        }}
+                        className="w-56 whitespace-nowrap rounded-input border border-border-default bg-surface-default py-4 shadow-elevation-2 focus-visible:outline-none"
+                      >
+                        {ROLE_OPTIONS.filter(r => r !== u.userRole).map((role) => (
+                          <button
+                            key={role}
+                            onClick={() => handleRoleChange(u.userId, role)}
+                            className="flex w-full items-center gap-8 px-16 py-8 text-left text-body-small leading-none text-text-primary hover:bg-surface-muted transition-colors"
+                          >
+                            Set as {role}
+                          </button>
+                        ))}
+                        <div className="my-2 border-t border-border-default" />
+                        <button
+                          onClick={() => {
+                            setSelectedUser(u);
+                            // Close the native popover since we are opening a separate modal
+                            document.getElementById(`menu-${u.userId}`).hidePopover();
+                            // Open the dialog after state updates
+                            setTimeout(() => deleteUserDialogRef.current?.showModal(), 0);
+                          }}
+                          className="flex w-full items-center px-16 py-8 text-left text-body-small leading-none text-danger-main hover:bg-danger-bg transition-colors"
+                        >
+                          Delete User
+                        </button>
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -173,39 +226,13 @@ export default function Users() {
         </div>
       )}
 
-      {openMenu && (
-        <div
-          ref={menuRef}
-          className="fixed z-[9999] w-56 whitespace-nowrap rounded-input border border-border-default bg-surface-default py-4 shadow-elevation-2 animate-fade-in"
-          style={{ top: menuPos.top, left: menuPos.left }}
-        >
-          {ROLE_OPTIONS.filter(r => r !== users?.find(u => u.userId === openMenu)?.userRole).map((role) => (
-            <button
-              key={role}
-              onClick={() => handleRoleChange(openMenu, role)}
-              className="flex w-full items-center gap-8 px-16 py-8 text-left text-body-small leading-none text-text-primary hover:bg-surface-muted transition-colors"
-            >
-              Set as {role}
-            </button>
-          ))}
-          <div className="my-2 border-t border-border-default" />
-          <button
-            onClick={() => {
-              setSelectedUser(users?.find(u => u.userId === openMenu));
-              setOpenMenu(null);
-            }}
-            className="flex w-full items-center px-16 py-8 text-left text-body-small leading-none text-danger-main hover:bg-danger-bg transition-colors"
-          >
-            Delete User
-          </button>
-        </div>
-      )}
-
+      {/* ── Delete Confirmation Modal ─── */}
       {selectedUser && (
         <ConfirmUserDeleteModal
+          dialogRef={deleteUserDialogRef}
           userName={selectedUser.userName}
           onConfirm={handleDeleteConfirm}
-          onCancel={() => setSelectedUser(null)}
+          onCancel={() => { setSelectedUser(null); deleteUserDialogRef.current?.close(); }}
           isDeleting={isDeleting}
         />
       )}

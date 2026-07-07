@@ -1,9 +1,10 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { warehouseBatchRequestSchema, warehouseBatchRequestDefaultValues } from "@/yupSchema/warehouse/request/WarehouseBatchRequestDTO";
+import { useWarehouseForm } from "@/hooks/useWarehouseForm";
 
+// ─── Shared input styles ─────────────────────────────────────
 const inputBase =
   "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
 const inputOk =
@@ -14,45 +15,31 @@ const inputErr =
 /**
  * WarehouseForm — create form for new warehouse batches.
  *
- * Uses suggestion dropdowns (onMouseDown + preventDefault) for type/variant/color.
- * Sizes managed in plain React state — not part of RHF.
- * RHF handles main fields; sizes passed separately to onSubmit.
+ * Uses the HTML5 Popover API for type/variant/color suggestion dropdowns.
+ * Each suggestion list is a popover attached to its input via `popovertarget`.
+ * The browser manages open/close — no React visibility state needed.
+ *
+ * Sizes managed in plain React state (not part of RHF).
+ * All state, computed values, and handlers are extracted to useWarehouseForm.
  */
 export const WarehouseForm = ({ onSubmit, isPending, batches, submitLabel = "Create Batch" }) => {
-  const [showTypes, setShowTypes] = useState(false);
-  const [showVariants, setShowVariants] = useState(false);
-  const [showColors, setShowColors] = useState(false);
 
-  const types = [...new Set(batches.map((batch) => batch.type))];
-  const variants = [...new Set(batches.map((batch) => batch.variant))];
-  const colors = [...new Set(batches.map((batch) => batch.color))];
-
+  // ─── RHF: form registration + validation ─────────────────────
   const { register, handleSubmit, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(warehouseBatchRequestSchema),
     defaultValues: warehouseBatchRequestDefaultValues,
     mode: "onBlur",
   });
 
-  const [sizes, setSizes] = useState([]);
+  // ─── Hook: computed values + handlers ────────────────────────
+  // No visibility state (showTypes etc.) — the Popover API handles that.
+  const {types, variants, colors, handleTypeSelect, handleVariantSelect, handleColorSelect, sizes, addRow, removeRow, updateRow,} = useWarehouseForm({ batches, setValue });
 
-  const addRow = () => {
-    setSizes([...sizes, { size: "", quantity: "" }]);
-  };
-
-  const removeRow = (index) => {
-    setSizes(sizes.filter((_, i) => i !== index));
-  };
-
-  const updateRow = (index, field, value) => {
-    const updated = [...sizes];
-    updated[index] = { ...updated[index], [field]: value };
-    setSizes(updated);
-  };
-
+  // ─── Render ──────────────────────────────────────────────────
   return (
     <form onSubmit={handleSubmit((data) => onSubmit(data, sizes))} className="space-y-24">
 
-      {/* Batch Name + Price */}
+      {/* ── Batch Name + Price ─────────────────────────────────── */}
       <div className="grid grid-cols-1 gap-16 md:grid-cols-2">
         <div>
           <label className="mb-8 block text-ui-label font-semibold text-text-secondary">Batch Name</label>
@@ -80,31 +67,30 @@ export const WarehouseForm = ({ onSubmit, isPending, batches, submitLabel = "Cre
         </div>
       </div>
 
-      {/* Type → Variant → Color suggestion dropdowns */}
+      {/* ── Type → Variant → Color suggestion dropdowns ────────── */}
       <div className="grid grid-cols-1 gap-16 md:grid-cols-3">
-        <div
-          className="relative"
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget)) {
-              setShowTypes(false);
-            }
-          }}
-        >
+
+        {/* Type suggestion dropdown */}
+        <div className="relative">
           <label className="mb-8 block text-ui-label font-semibold text-text-secondary">Type</label>
           <input
             type="text"
             placeholder="e.g. Shirt"
             aria-invalid={errors.type ? "true" : "false"}
             className={`${inputBase} ${errors.type ? inputErr : inputOk}`}
-            onFocus={() => setShowTypes(true)}
+            popovertarget="type-popover"
             {...register("type")}
           />
-          {showTypes && types.length > 0 && (
-            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in">
+          {types.length > 0 && (
+            <div
+              id="type-popover"
+              popover="auto"
+              className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in"
+            >
               {types.map((type) => (
                 <div
                   key={type}
-                  onMouseDown={(e) => { e.preventDefault(); setValue("type", type); setShowTypes(false); }}
+                  onClick={() => handleTypeSelect(type)}
                   className="cursor-pointer px-16 py-10 text-body-normal text-text-primary hover:bg-surface-muted transition-colors"
                 >
                   {type}
@@ -115,29 +101,27 @@ export const WarehouseForm = ({ onSubmit, isPending, batches, submitLabel = "Cre
           {errors.type && (<p className="mt-4 text-body-small text-danger-main">{errors.type.message}</p>)}
         </div>
 
-        <div
-          className="relative"
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget)) {
-              setShowVariants(false);
-            }
-          }}
-        >
+        {/* Variant suggestion dropdown */}
+        <div className="relative">
           <label className="mb-8 block text-ui-label font-semibold text-text-secondary">Variant</label>
           <input
             type="text"
             placeholder="e.g. Short Sleeve"
             aria-invalid={errors.variant ? "true" : "false"}
             className={`${inputBase} ${errors.variant ? inputErr : inputOk}`}
-            onFocus={() => setShowVariants(true)}
+            popovertarget="variant-popover"
             {...register("variant")}
           />
-          {showVariants && variants.length > 0 && (
-            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in">
+          {variants.length > 0 && (
+            <div
+              id="variant-popover"
+              popover="auto"
+              className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in"
+            >
               {variants.map((variant) => (
                 <div
                   key={variant}
-                  onMouseDown={(e) => { e.preventDefault(); setValue("variant", variant); setShowVariants(false); }}
+                  onClick={() => handleVariantSelect(variant)}
                   className="cursor-pointer px-16 py-10 text-body-normal text-text-primary hover:bg-surface-muted transition-colors"
                 >
                   {variant}
@@ -148,29 +132,27 @@ export const WarehouseForm = ({ onSubmit, isPending, batches, submitLabel = "Cre
           {errors.variant && (<p className="mt-4 text-body-small text-danger-main">{errors.variant.message}</p>)}
         </div>
 
-        <div
-          className="relative"
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget)) {
-              setShowColors(false);
-            }
-          }}
-        >
+        {/* Color suggestion dropdown */}
+        <div className="relative">
           <label className="mb-8 block text-ui-label font-semibold text-text-secondary">Color</label>
           <input
             type="text"
             placeholder="e.g. White"
             aria-invalid={errors.color ? "true" : "false"}
             className={`${inputBase} ${errors.color ? inputErr : inputOk}`}
-            onFocus={() => setShowColors(true)}
+            popovertarget="color-popover"
             {...register("color")}
           />
-          {showColors && colors.length > 0 && (
-            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in">
+          {colors.length > 0 && (
+            <div
+              id="color-popover"
+              popover="auto"
+              className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in"
+            >
               {colors.map((color) => (
                 <div
                   key={color}
-                  onMouseDown={(e) => { e.preventDefault(); setValue("color", color); setShowColors(false); }}
+                  onClick={() => handleColorSelect(color)}
                   className="cursor-pointer px-16 py-10 text-body-normal text-text-primary hover:bg-surface-muted transition-colors"
                 >
                   {color}
@@ -182,7 +164,7 @@ export const WarehouseForm = ({ onSubmit, isPending, batches, submitLabel = "Cre
         </div>
       </div>
 
-      {/* Description (optional) */}
+      {/* ── Description (optional) ─────────────────────────────── */}
       <div>
         <label className="mb-8 block text-ui-label font-semibold text-text-secondary">Description (optional)</label>
         <textarea
@@ -195,7 +177,7 @@ export const WarehouseForm = ({ onSubmit, isPending, batches, submitLabel = "Cre
         {errors.description && (<p className="mt-4 text-body-small text-danger-main">{errors.description.message}</p>)}
       </div>
 
-      {/* Sizes & Quantities */}
+      {/* ── Sizes & Quantities ─────────────────────────────────── */}
       <div className="rounded-card border border-border-default bg-surface-elevated/30 p-20">
         <div className="mb-12 flex items-center justify-between">
           <label className="text-ui-label font-semibold text-text-secondary">Sizes &amp; Quantities</label>
@@ -253,7 +235,7 @@ export const WarehouseForm = ({ onSubmit, isPending, batches, submitLabel = "Cre
         </div>
       </div>
 
-      {/* Submit */}
+      {/* ── Submit ─────────────────────────────────────────────── */}
       <div className="flex items-center gap-12 pt-8">
         <button
           type="submit"

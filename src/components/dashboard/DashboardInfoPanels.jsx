@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
 import { Calendar, AlertTriangle, ChevronRight } from "lucide-react";
-import { fmtD } from "./dashboardShared";
+import { formatShortDate } from "./dashboardShared";
 
-export function InfoPanels({ upcoming, lowStock }) {
+export function InfoPanels({ upcomingCollections, lowStockProducts }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
       {/* Upcoming Collections */}
@@ -17,23 +17,23 @@ export function InfoPanels({ upcoming, lowStock }) {
               <p className="mt-2 text-xs text-gray-400">Next 7 days</p>
             </div>
           </div>
-          {upcoming.length > 0 && (
+          {upcomingCollections.length > 0 && (
             <Link to="/orders" className="flex items-center gap-4 text-xs font-medium text-red-600 hover:text-red-700 transition-colors">
               View all <ChevronRight className="w-12 h-12" />
             </Link>
           )}
         </div>
-        {upcoming.length > 0 ? (
+        {upcomingCollections.length > 0 ? (
           <div className="space-y-10">
-            {upcoming.map(o => (
-              <div key={o.orderId} className="flex items-center justify-between rounded-xl border border-gray-100 px-14 py-12 hover:bg-gray-50 transition-colors">
+            {upcomingCollections.map(order => (
+              <div key={order.orderId} className="flex items-center justify-between rounded-xl border border-gray-100 px-14 py-12 hover:bg-gray-50 transition-colors">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-gray-900 truncate">{o.orderNumber}</p>
-                  <p className="text-[11px] text-gray-400 truncate">{o.customerName}</p>
+                  <p className="text-xs font-semibold text-gray-900 truncate">{order.orderNumber}</p>
+                  <p className="text-[11px] text-gray-400 truncate">{order.customerName}</p>
                 </div>
                 <div className="flex items-center gap-10 shrink-0 ml-12">
-                  <span className="text-[11px] text-gray-500 whitespace-nowrap">{o.orderStatus?.replace(/_/g, " ")}</span>
-                  <span className="text-[11px] text-gray-400 whitespace-nowrap">{fmtD(o.collectionDate)}</span>
+                  <span className="text-[11px] text-gray-500 whitespace-nowrap">{order.orderStatus?.replace(/_/g, " ")}</span>
+                  <span className="text-[11px] text-gray-400 whitespace-nowrap">{formatShortDate(order.collectionDate)}</span>
                 </div>
               </div>
             ))}
@@ -53,22 +53,22 @@ export function InfoPanels({ upcoming, lowStock }) {
               <p className="mt-2 text-xs text-gray-400">Products below 5 units</p>
             </div>
           </div>
-          {lowStock.length > 0 && (
+          {lowStockProducts.length > 0 && (
             <Link to="/products" className="flex items-center gap-4 text-xs font-medium text-red-600 hover:text-red-700 transition-colors">
               View all <ChevronRight className="w-12 h-12" />
             </Link>
           )}
         </div>
-        {lowStock.length > 0 ? (
+        {lowStockProducts.length > 0 ? (
           <div className="space-y-10">
-            {lowStock.map(p => (
-              <div key={p.productId} className="flex items-center justify-between rounded-xl border border-gray-100 px-14 py-12 hover:bg-gray-50 transition-colors">
+            {lowStockProducts.map(product => (
+              <div key={product.productId} className="flex items-center justify-between rounded-xl border border-gray-100 px-14 py-12 hover:bg-gray-50 transition-colors">
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-gray-900 truncate">{p.productName}</p>
-                  <p className="text-[11px] text-gray-400 capitalize">{p.type} · {p.variant}</p>
+                  <p className="text-xs font-semibold text-gray-900 truncate">{product.productName}</p>
+                  <p className="text-[11px] text-gray-400 capitalize">{product.type} · {product.variant}</p>
                 </div>
-                <span className={`text-xs font-bold tabular-nums shrink-0 ml-12 ${(p.totalQuantity || 0) === 0 ? "text-red-600" : "text-amber-600"}`}>
-                  {p.totalQuantity || 0} left
+                <span className={`text-xs font-bold tabular-nums shrink-0 ml-12 ${(product.totalQuantity || 0) === 0 ? "text-red-600" : "text-amber-600"}`}>
+                  {product.totalQuantity || 0} left
                 </span>
               </div>
             ))}

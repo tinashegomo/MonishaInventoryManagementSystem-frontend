@@ -1,19 +1,15 @@
 import { Trash2, Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { formatDate } from "@/utils/dateUtils";
 
-function formatDate(dateStr) {
-  if (!dateStr) return "-";
-  const d = new Date(dateStr);
-  return d.toLocaleDateString("en-ZW", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+// ─── Component ────────────────────────────────────────────────
 
 export const ProductList = ({ products, setSelectedItem }) => {
+
+  // ─── Hooks ────────────────────────────────────────────────────
   const navigate = useNavigate();
 
+  // ─── Render ───────────────────────────────────────────────────
   return (
     <div className="w-full rounded-card bg-surface-default">
       <table className="w-full text-sm">
