@@ -1,10 +1,10 @@
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Plus, Trash2, Loader2 } from "lucide-react";
 import { warehouseBatchRequestSchema, warehouseBatchRequestDefaultValues } from "@/yupSchema/warehouse/request/WarehouseBatchRequestDTO";
 import { useWarehouseForm } from "@/hooks/useWarehouseForm";
 
-// ─── Shared input styles ─────────────────────────────────────
 const inputBase =
   "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
 const inputOk =
@@ -12,30 +12,40 @@ const inputOk =
 const inputErr =
   "border-danger-main focus:border-danger-hover focus:ring-2 focus:ring-danger-bg";
 
-/**
- * WarehouseForm — create form for new warehouse batches.
- *
- * Uses the HTML5 Popover API for type/variant/color suggestion dropdowns.
- * Each suggestion list is a popover attached to its input via `popovertarget`.
- * The browser manages open/close — no React visibility state needed.
- *
- * Sizes managed in plain React state (not part of RHF).
- * All state, computed values, and handlers are extracted to useWarehouseForm.
- */
 export const WarehouseForm = ({ onSubmit, isPending, batches, submitLabel = "Create Batch" }) => {
 
-  // ─── RHF: form registration + validation ─────────────────────
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm({
     resolver: yupResolver(warehouseBatchRequestSchema),
     defaultValues: warehouseBatchRequestDefaultValues,
     mode: "onBlur",
   });
 
-  // ─── Hook: computed values + handlers ────────────────────────
-  // No visibility state (showTypes etc.) — the Popover API handles that.
   const {types, variants, colors, handleTypeSelect, handleVariantSelect, handleColorSelect, sizes, addRow, removeRow, updateRow,} = useWarehouseForm({ batches, setValue });
 
-  // ─── Render ──────────────────────────────────────────────────
+  // Single dropdown state — "type" | "variant" | "color" | null
+  const [openDropdown, setOpenDropdown] = useState(null);
+
+  // Watch input values for filtering suggestions
+  const typeValue = watch("type") || "";
+  const variantValue = watch("variant") || "";
+  const colorValue = watch("color") || "";
+
+  // Merge RHF register with custom onChange for dropdown fields
+  const typeRegister = register("type");
+  const variantRegister = register("variant");
+  const colorRegister = register("color");
+
+  // Filter suggestions as user types
+  const filteredTypes = types.filter(type =>
+    type.toLowerCase().includes(typeValue.toLowerCase())
+  );
+  const filteredVariants = variants.filter(variant =>
+    variant.toLowerCase().includes(variantValue.toLowerCase())
+  );
+  const filteredColors = colors.filter(color =>
+    color.toLowerCase().includes(colorValue.toLowerCase())
+  );
+
   return (
     <form onSubmit={handleSubmit((data) => onSubmit(data, sizes))} className="space-y-24">
 
@@ -70,93 +80,129 @@ export const WarehouseForm = ({ onSubmit, isPending, batches, submitLabel = "Cre
       {/* ── Type → Variant → Color suggestion dropdowns ────────── */}
       <div className="grid grid-cols-1 gap-16 md:grid-cols-3">
 
-        {/* Type suggestion dropdown */}
-        <div className="relative">
+        {/* ── Type ─── */}
+        <div
+          className="relative"
+          onBlur={(e) => {
+            if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+              setOpenDropdown(null);
+            }
+          }}
+        >
           <label className="mb-8 block text-ui-label font-semibold text-text-secondary">Type</label>
           <input
+            {...typeRegister}
             type="text"
             placeholder="e.g. Shirt"
             aria-invalid={errors.type ? "true" : "false"}
             className={`${inputBase} ${errors.type ? inputErr : inputOk}`}
-            popovertarget="type-popover"
-            {...register("type")}
+            onFocus={() => setOpenDropdown("type")}
+            onChange={(e) => {
+              typeRegister.onChange(e);
+              setOpenDropdown("type");
+            }}
           />
-          {types.length > 0 && (
-            <div
-              id="type-popover"
-              popover="auto"
-              className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in"
-            >
-              {types.map((type) => (
-                <div
+          {openDropdown === "type" && filteredTypes.length > 0 && (
+            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in">
+              {filteredTypes.map((type) => (
+                <button
                   key={type}
-                  onClick={() => handleTypeSelect(type)}
-                  className="cursor-pointer px-16 py-10 text-body-normal text-text-primary hover:bg-surface-muted transition-colors"
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleTypeSelect(type);
+                    setOpenDropdown(null);
+                  }}
+                  className="block w-full cursor-pointer px-16 py-6 text-left text-body-small text-text-primary hover:bg-surface-muted transition-colors"
                 >
                   {type}
-                </div>
+                </button>
               ))}
             </div>
           )}
           {errors.type && (<p className="mt-4 text-body-small text-danger-main">{errors.type.message}</p>)}
         </div>
 
-        {/* Variant suggestion dropdown */}
-        <div className="relative">
+        {/* ── Variant ─── */}
+        <div
+          className="relative"
+          onBlur={(e) => {
+            if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+              setOpenDropdown(null);
+            }
+          }}
+        >
           <label className="mb-8 block text-ui-label font-semibold text-text-secondary">Variant</label>
           <input
+           {...variantRegister}
             type="text"
             placeholder="e.g. Short Sleeve"
             aria-invalid={errors.variant ? "true" : "false"}
             className={`${inputBase} ${errors.variant ? inputErr : inputOk}`}
-            popovertarget="variant-popover"
-            {...register("variant")}
+            onFocus={() => setOpenDropdown("variant")}
+            onChange={(e) => {
+              variantRegister.onChange(e);
+              setOpenDropdown("variant");
+            }}
           />
-          {variants.length > 0 && (
-            <div
-              id="variant-popover"
-              popover="auto"
-              className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in"
-            >
-              {variants.map((variant) => (
-                <div
+          {openDropdown === "variant" && filteredVariants.length > 0 && (
+            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in">
+              {filteredVariants.map((variant) => (
+                <button
                   key={variant}
-                  onClick={() => handleVariantSelect(variant)}
-                  className="cursor-pointer px-16 py-10 text-body-normal text-text-primary hover:bg-surface-muted transition-colors"
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleVariantSelect(variant);
+                    setOpenDropdown(null);
+                  }}
+                  className="block w-full cursor-pointer px-16 py-6 text-left text-body-small text-text-primary hover:bg-surface-muted transition-colors"
                 >
                   {variant}
-                </div>
+                </button>
               ))}
             </div>
           )}
           {errors.variant && (<p className="mt-4 text-body-small text-danger-main">{errors.variant.message}</p>)}
         </div>
 
-        {/* Color suggestion dropdown */}
-        <div className="relative">
+        {/* ── Color ─── */}
+        <div
+          className="relative"
+          onBlur={(e) => {
+            if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+              setOpenDropdown(null);
+            }
+          }}
+        >
           <label className="mb-8 block text-ui-label font-semibold text-text-secondary">Color</label>
           <input
+            {...colorRegister}
             type="text"
             placeholder="e.g. White"
             aria-invalid={errors.color ? "true" : "false"}
             className={`${inputBase} ${errors.color ? inputErr : inputOk}`}
-            popovertarget="color-popover"
-            {...register("color")}
+            onFocus={() => setOpenDropdown("color")}
+            onChange={(e) => {
+              colorRegister.onChange(e);
+              setOpenDropdown("color");
+            }}
           />
-          {colors.length > 0 && (
-            <div
-              id="color-popover"
-              popover="auto"
-              className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in"
-            >
-              {colors.map((color) => (
-                <div
+          {openDropdown === "color" && filteredColors.length > 0 && (
+            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 overflow-hidden animate-scale-in">
+              {filteredColors.map((color) => (
+                <button
                   key={color}
-                  onClick={() => handleColorSelect(color)}
-                  className="cursor-pointer px-16 py-10 text-body-normal text-text-primary hover:bg-surface-muted transition-colors"
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleColorSelect(color);
+                    setOpenDropdown(null);
+                  }}
+                  className="block w-full cursor-pointer px-16 py-6 text-left text-body-small text-text-primary hover:bg-surface-muted transition-colors"
                 >
                   {color}
-                </div>
+                </button>
               ))}
             </div>
           )}

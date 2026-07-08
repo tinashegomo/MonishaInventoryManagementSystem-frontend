@@ -1,12 +1,22 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Pencil, Trash2, Users, Loader2 } from "lucide-react";
 import {
   useGetAllCustomers,
   useUpdateCustomer,
   useDeleteCustomer,
 } from "@/hooks/InventoryHooks";
-import { CustomerModal } from "@/components/customer/CustomerModal";
+import Modal from "@/components/shared/Modal";
+import { customerRequestSchema, customerRequestDefaultValues } from "@/yupSchema/customer/CustomerRequestDTO";
 import { formatDate } from "@/utils/dateUtils";
+
+const inputBase =
+  "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
+const inputOk =
+  "border-border-default focus:border-border-focus focus-ring";
+const inputErr =
+  "border-danger-main focus:border-danger-hover focus:ring-2 focus:ring-danger-bg";
 
 /**
  * Customers — read-only list page with edit and delete.
@@ -17,7 +27,6 @@ export default function Customers() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const customerDialogRef = useRef(null);
 
   // ─── Data & Mutations ────────────────────────────────────────
   const { data: customers = [], isLoading, isError } = useGetAllCustomers();
@@ -162,15 +171,95 @@ export default function Customers() {
       )}
 
       {/* ── Edit Modal ────────────────────────────────────────── */}
-      <CustomerModal
-        key={selectedCustomer?.customerId}
-        dialogRef={customerDialogRef}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSubmit={handleUpdate}
-        isPending={isUpdating}
-        customer={selectedCustomer}
-      />
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+
+        <Modal.Header onClose={handleCloseModal}>
+          Edit Customer
+        </Modal.Header>
+
+        <Modal.Body>
+          <EditCustomerForm
+            customer={selectedCustomer}
+            onSubmit={handleUpdate}
+            onCancel={handleCloseModal}
+            isPending={isUpdating}
+          />
+        </Modal.Body>
+
+      </Modal>
     </div>
+  );
+}
+
+// ─── Inline Edit Form ────────────────────────────────────────
+// Separated so the Modal component stays clean.
+function EditCustomerForm({ customer, onSubmit, onCancel, isPending }) {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: yupResolver(customerRequestSchema),
+    defaultValues: customer
+      ? { customerName: customer.customerName, phoneNumber: customer.phoneNumber }
+      : customerRequestDefaultValues,
+    mode: "onBlur",
+  });
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-20">
+      <div>
+        <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
+          Customer Name
+        </label>
+        <input
+          type="text"
+          placeholder="e.g. John Doe"
+          aria-invalid={errors.customerName ? "true" : "false"}
+          className={`${inputBase} ${errors.customerName ? inputErr : inputOk}`}
+          {...register("customerName")}
+        />
+        {errors.customerName && (
+          <p className="mt-4 text-body-small text-danger-main">{errors.customerName.message}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
+          Phone Number
+        </label>
+        <input
+          type="text"
+          placeholder="e.g. +263 77 123 4567"
+          aria-invalid={errors.phoneNumber ? "true" : "false"}
+          className={`${inputBase} ${errors.phoneNumber ? inputErr : inputOk}`}
+          {...register("phoneNumber")}
+        />
+        {errors.phoneNumber && (
+          <p className="mt-4 text-body-small text-danger-main">{errors.phoneNumber.message}</p>
+        )}
+      </div>
+
+      <div className="flex items-center justify-end gap-12 pt-4">
+        <button
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); onCancel(); }}
+          className="rounded-input border border-border-default px-14 py-8 text-sm font-medium text-text-secondary hover:bg-surface-muted transition-all duration-200 press-scale"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          onMouseDown={(e) => e.preventDefault()}
+          disabled={isPending}
+          className="inline-flex items-center justify-center gap-8 rounded-input bg-brand-primary px-14 py-8 text-sm font-semibold text-neutral-0 shadow-elevation-1 hover:bg-brand-hover hover:shadow-elevation-2 active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 press-scale transition-all duration-200"
+        >
+          {isPending ? (
+            <>
+              <Loader2 className="h-16 w-16 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
+        </button>
+      </div>
+    </form>
   );
 }

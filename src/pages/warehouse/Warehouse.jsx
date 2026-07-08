@@ -1,12 +1,11 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { Plus, Loader2, Package, FileSpreadsheet, FileText } from "lucide-react";
 import { useGetAllWarehouseBatches, useDeleteWarehouseBatch, useGetCurrentUser } from "@/hooks/InventoryHooks";
 import { WarehouseBatchList } from "@/components/warehouse/WarehouseBatchList";
-import ConfirmBatchDeleteModal from "@/components/warehouse/ConfirmBatchDeleteModal";
+import Modal from "@/components/shared/Modal";
 import { exportToExcel, exportToPDF } from "@/utils/exportUtils";
 
-// ─── Export column definitions ──────────────────────────────
 const BATCH_COLUMNS = [
   { header: "Batch Name", key: "batchName" },
   { header: "Type", key: "type" },
@@ -18,61 +17,33 @@ const BATCH_COLUMNS = [
   { header: "Created By", key: "createdBy" },
 ];
 
-/**
- * Warehouse — list page for all warehouse batches.
- * Shows loading spinner, empty state, error banner, or batch table.
- * Delete triggers a confirmation modal before removing.
- */
-
-// ─── State ─────────────────────────────────────────────────────
-
 export default function Warehouse() {
-
   const { data: user } = useGetCurrentUser();
   const { data: batches, isLoading, isError, error } = useGetAllWarehouseBatches();
   const { mutate: deleteBatch, isPending: isDeleting } = useDeleteWarehouseBatch();
   const [selectedItem, setSelectedItem] = useState(null);
-  const deleteBatchDialogRef = useRef(null);
 
-  // Sort batches by createdAt descending (most recent first)
   const sortedBatches = useMemo(() => {
     if (!batches) return [];
     return [...batches].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [batches]);
 
-  // Open the dialog when an item is selected for deletion
-  useEffect(() => {
-    if (selectedItem) {
-      // Small delay to let the component mount and ref attach
-      setTimeout(() => deleteBatchDialogRef.current?.showModal(), 0);
-    }
-  }, [selectedItem]);
-
-// ─── Functions ─────────────────────────────────────────────────
-
-  // Delete selected batch, close modal on success or error
   const handleDeleteConfirm = () => {
     if (!selectedItem) return;
     deleteBatch(selectedItem.batchId, {
-      onSuccess: () => { setSelectedItem(null); deleteBatchDialogRef.current?.close(); },
-      onError: () => { setSelectedItem(null); deleteBatchDialogRef.current?.close(); },
+      onSuccess: () => setSelectedItem(null),
+      onError: () => setSelectedItem(null),
     });
   };
 
-// ─── Render ────────────────────────────────────────────────────
-
   return (
     <div className="animate-fade-in mx-auto max-w-7xl">
-      {/* ── Page Header ─── */}
       <div className="mb-32 flex flex-col gap-16 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-h2 font-bold text-text-primary">Warehouse Stock</h1>
-          <p className="mt-8 text-body-normal text-text-secondary">
-            Manage inventory batches
-          </p>
+          <p className="mt-8 text-body-normal text-text-secondary">Manage inventory batches</p>
         </div>
         <div className="flex items-center gap-8">
-          {/* Export buttons */}
           {sortedBatches.length > 0 && (
             <>
               <button
@@ -91,7 +62,6 @@ export default function Warehouse() {
               </button>
             </>
           )}
-          {/* Create button */}
           {user?.userRole !== "USER" && (
             <Link
               to="/warehouse/create-batch"
@@ -104,14 +74,12 @@ export default function Warehouse() {
         </div>
       </div>
 
-      {/* ── Error Banner ─── */}
       {isError && (
         <div className="mb-20 rounded-input border border-danger-main bg-danger-bg px-16 py-12 text-body-normal text-danger-main animate-fade-in">
           {error.response?.data?.message || "Failed to load batches. Please try again."}
         </div>
       )}
 
-      {/* ── Content ─── */}
       {isLoading ? (
         <div className="flex min-h-[400px] flex-col items-center justify-center gap-16 rounded-card bg-surface-default shadow-elevation-1 animate-fade-in">
           <Loader2 className="h-32 w-32 animate-spin text-brand-primary" />
@@ -132,15 +100,40 @@ export default function Warehouse() {
       )}
 
       {/* ── Delete Confirmation Modal ─── */}
-      {selectedItem && (
-        <ConfirmBatchDeleteModal
-          dialogRef={deleteBatchDialogRef}
-          batchName={selectedItem.batchName}
-          onConfirm={handleDeleteConfirm}
-          onCancel={() => { setSelectedItem(null); deleteBatchDialogRef.current?.close(); }}
-          isDeleting={isDeleting}
-        />
-      )}
+      <Modal isOpen={!!selectedItem} onClose={() => setSelectedItem(null)}>
+
+        <Modal.Header onClose={() => setSelectedItem(null)}>
+          Delete Batch
+        </Modal.Header>
+
+        <Modal.Body>
+          <p className="text-body-normal text-text-secondary">
+            Are you sure you want to delete{" "}
+            <span className="font-semibold text-text-primary">{selectedItem?.batchName}</span>
+            ? This cannot be undone.
+          </p>
+        </Modal.Body>
+
+        <Modal.Footer>
+          <button
+            type="button"
+            onMouseDown={(e) => { e.preventDefault(); setSelectedItem(null); }}
+            disabled={isDeleting}
+            className="rounded-input border border-border-default px-14 py-8 text-sm font-medium text-text-secondary hover:bg-surface-muted transition-all duration-200 disabled:opacity-50 press-scale"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onMouseDown={(e) => { e.preventDefault(); handleDeleteConfirm(); }}
+            disabled={isDeleting}
+            className="flex items-center gap-8 rounded-input bg-danger-main px-14 py-8 text-sm font-semibold text-neutral-0 hover:bg-danger-hover active:bg-danger-pressed transition-all duration-200 disabled:opacity-60 press-scale"
+          >
+            {isDeleting ? (<><Loader2 className="h-14 w-14 animate-spin" /> Deleting...</>) : ("Delete")}
+          </button>
+        </Modal.Footer>
+
+      </Modal>
     </div>
   );
 }

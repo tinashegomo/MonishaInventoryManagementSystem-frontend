@@ -1,73 +1,75 @@
-import { useEffect, useRef, forwardRef, useImperativeHandle } from "react";
+import { X } from "lucide-react";
 
 /**
- * Modal — shared wrapper for all <dialog>-based modals.
+ * Modal — closes using onBlur + relatedTarget, the same pattern used
+ * for dropdowns, instead of "click backdrop + stopPropagation".
  *
- * Handles:
- *   - Attaching the ref to the <dialog> element
- *   - Syncing open/close with the `isOpen` prop (via useEffect)
- *   - Listening for the native "close" event (ESC, backdrop click)
- *   - Exposing `.showModal()` and `.close()` via imperative handle
- *
- * The parent does NOT need to manage open/close useEffect — just pass
- * isOpen + onClose and call the imperative methods when needed.
- *
- * Props:
- *   isOpen   — boolean, controls whether the dialog is open
- *   onClose  — callback, fired when dialog closes (ESC, backdrop, .close())
- *   children — modal content (forms, messages, buttons)
- *   className — optional, applied to the <dialog> element for styling
- *
- * Usage:
- *   const dialogRef = useRef(null);
- *
- *   <Modal ref={dialogRef} isOpen={isOpen} onClose={() => setIsOpen(false)}>
- *     <h2>Title</h2>
- *     <p>Content</p>
- *     <button onClick={() => setIsOpen(false)}>Close</button>
- *   </Modal>
+ * How it works:
+ *   - The modal BOX itself is made focusable (tabIndex={-1}) and grabs
+ *     focus the moment it opens (autoFocus).
+ *   - onBlur fires whenever focus leaves the box. relatedTarget tells us
+ *     WHERE focus is going next. If it's going somewhere outside the
+ *     box (the backdrop, or nothing), we close. If it's going to
+ *     something still inside the box (a button, an input), we don't.
+ *   - Buttons inside the modal use onMouseDown (not onClick) for the
+ *     same reason as dropdowns: mousedown fires BEFORE blur, so the
+ *     button's own action still runs even though blur is about to close
+ *     the modal.
  */
-const Modal = forwardRef(function Modal({ isOpen, onClose, children, className = "" }, ref) {
-  const dialogRef = useRef(null);
-
-  // Expose .showModal() and .close() so the parent can call them directly
-  // via dialogRef.current.showModal() / dialogRef.current.close()
-  useImperativeHandle(ref, () => ({
-    showModal: () => dialogRef.current?.showModal(),
-    close: () => dialogRef.current?.close(),
-  }));
-
-  // ─── Sync React state (isOpen) with native dialog open/close ──
-  // When isOpen becomes true, call the native .showModal() method.
-  // When isOpen becomes false, call the native .close() method.
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (isOpen) {
-      dialog.showModal();
-    } else {
-      dialog.close();
-    }
-  }, [isOpen]);
-
-  // ─── Listen for native "close" event ─────────────────────────
-  // The browser fires "close" when the user presses ESC, clicks the
-  // backdrop, or when .close() is called programmatically.
-  // We forward this to the parent's onClose callback so it can reset
-  // its state (e.g., setIsOpen(false), setSelectedUser(null)).
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    const handleClose = () => onClose();
-    dialog.addEventListener("close", handleClose);
-    return () => dialog.removeEventListener("close", handleClose);
-  }, [onClose]);
+export default function Modal({ isOpen, onClose, children, className = "" }) {
+  if (!isOpen) return null;
 
   return (
-    <dialog ref={dialogRef} className={className}>
-      {children}
-    </dialog>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div
+        tabIndex={-1}
+        autoFocus
+        onBlur={(e) => {
+          // e.currentTarget = the modal box (because tabIndex/onBlur are on it)
+          // e.relatedTarget = whatever element is ABOUT to receive focus
+          if (!e.currentTarget.contains(e.relatedTarget)) {
+            onClose();
+          }
+        }}
+        className={`w-full max-w-md rounded-lg bg-white p-24 shadow-lg outline-none ${className}`}
+      >
+        {children}
+      </div>
+    </div>
   );
-});
+}
 
-export default Modal;
+function ModalHeader({ onClose, children, className = "" }) {
+  return (
+    <div className={`mb-20 flex items-center justify-between ${className}`}>
+      <h2 className="text-h4 font-semibold text-text-primary">{children}</h2>
+      {onClose && (
+        <button
+          type="button"
+          // onMouseDown, not onClick — fires before the box's onBlur closes it
+          onMouseDown={onClose}
+          className="rounded-input p-8 text-text-muted hover:bg-surface-muted hover:text-text-primary transition-colors"
+          aria-label="Close modal"
+        >
+          <X className="h-18 w-18" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+function ModalBody({ children, className = "" }) {
+  return <div className={className}>{children}</div>;
+}
+
+function ModalFooter({ children, className = "" }) {
+  return (
+    <div className={`flex items-center justify-end gap-12 pt-4 ${className}`}>
+      {children}
+    </div>
+  );
+}
+
+Modal.Header = ModalHeader;
+Modal.Body = ModalBody;
+Modal.Footer = ModalFooter;

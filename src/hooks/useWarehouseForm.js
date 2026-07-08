@@ -8,10 +8,10 @@ import { useState } from "react";
  * - Suggestion pick handlers (set RHF value)
  * - Sizes array (plain React state)
  *
- * Note: Dropdown visibility is now handled natively by the HTML5 Popover API.
- * The browser manages showing/hiding the suggestion lists, so no React state
- * is needed for visibility (showTypes, showVariants, showColors removed).
- *
+ * Dropdown visibility is handled in the component via a single
+ * `openDropdown` state ("type" | "variant" | "color" | null),
+ * with `onBlur`/`relatedTarget` for safe close and `onMouseDown`
+ * + `preventDefault` for selecting items before blur.
  * Receives RHF's `setValue` from the component.
  */
 export const useWarehouseForm = ({ batches = [], setValue }) => {

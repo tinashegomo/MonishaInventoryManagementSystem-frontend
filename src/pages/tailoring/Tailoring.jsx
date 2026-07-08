@@ -1,51 +1,26 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, Fragment } from "react";
 import { useNavigate } from "react-router-dom";
 import { Scissors, Eye, MoreVertical, Loader2 } from "lucide-react";
 import { useGetOrdersByStatus, useUpdateOrderStatus } from "@/hooks/InventoryHooks";
 import { STATUS_TRANSITIONS } from "@/utils/statusUtils";
 import { formatDate } from "@/utils/dateUtils";
 
-/**
- * Tailoring — table of IN_PRODUCTION orders.
- * Tailors can view order details, see measurements, and mark orders ready for collection.
- * Uses the same table + popover pattern as Orders.jsx for consistency.
- */
 export default function Tailoring() {
-  // ─── State ──────────────────────────────────────────────────
   const navigate = useNavigate();
   const { data: orders = [], isLoading, isError } = useGetOrdersByStatus("IN_PRODUCTION");
   const { mutate: updateOrderStatus } = useUpdateOrderStatus();
+  const [openMenu, setOpenMenu] = useState(null);
 
-  // Dynamic position for the popover menu (same pattern as Orders.jsx)
-  const [menuPos, setMenuPos] = useState({ top: 0, left: 0 });
-
-  // ─── Functions ──────────────────────────────────────────────
-
-  // Sort orders by createdAt descending (most recent first)
   const sortedOrders = useMemo(() => {
     if (!orders) return [];
     return [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
   }, [orders]);
 
-  // Update order status and close the popover
   const handleStatusChange = (orderId, newStatus) => {
     updateOrderStatus({ orderId, status: newStatus });
-    const popover = document.getElementById(`menu-${orderId}`);
-    if (popover) {
-      popover.hidePopover();
-    }
+    setOpenMenu(null);
   };
 
-  // Calculate popover position from the clicked 3-dot button
-  const handleOpenMenu = (e) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setMenuPos({
-      top: rect.bottom + window.scrollY + 4,
-      left: rect.right - 224 + window.scrollX, // 224px = w-56 dropdown width
-    });
-  };
-
-  // ─── Render ──────────────────────────────────────────────────
   return (
     <div className="animate-fade-in mx-auto max-w-7xl">
 
@@ -91,7 +66,7 @@ export default function Tailoring() {
 
       {/* ── Tailoring Orders Table ─── */}
       {!isLoading && sortedOrders.length > 0 && (
-        <div className="w-full rounded-card bg-surface-default overflow-visible">
+        <div className="w-full rounded-card bg-surface-default">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border-default">
@@ -107,10 +82,8 @@ export default function Tailoring() {
             </thead>
             <tbody>
               {sortedOrders.map((order, index) => {
-                // Pre-compute custom items and measurements for this row
                 const customItems = order.orderItems.filter((item) => item.customMade);
                 const hasMeasurements = customItems.some((item) => item.measurements?.length > 0);
-                const transitions = STATUS_TRANSITIONS[order.orderStatus] || [];
 
                 return (
                   <tr
@@ -118,22 +91,15 @@ export default function Tailoring() {
                     className="border-b border-border-default/50 last:border-b-0 hover:bg-surface-muted/40 transition-colors duration-150"
                     style={{ animationDelay: `${index * 30}ms` }}
                   >
-                    {/* Order Number */}
                     <td className="min-w-[120px] px-6 py-4 font-medium text-text-primary whitespace-nowrap">
                       {order.orderNumber}
                     </td>
-
-                    {/* Customer Name */}
                     <td className="min-w-[160px] px-6 py-4 text-text-secondary whitespace-nowrap truncate">
                       {order.customerName}
                     </td>
-
-                    {/* Custom Items Count */}
                     <td className="min-w-[120px] px-6 py-4 text-text-secondary whitespace-nowrap">
                       {customItems.length} custom
                     </td>
-
-                    {/* Measurements indicator */}
                     <td className="min-w-[120px] px-6 py-4 text-text-secondary whitespace-nowrap">
                       {hasMeasurements ? (
                         <span className="text-success-main font-medium">Yes</span>
@@ -141,26 +107,25 @@ export default function Tailoring() {
                         <span className="text-text-muted">None</span>
                       )}
                     </td>
-
-                    {/* Total */}
                     <td className="w-28 px-6 py-4 text-text-primary text-right whitespace-nowrap tabular-nums">
                       ${order.totalAmount?.toLocaleString()}
                     </td>
-
-                    {/* Balance */}
                     <td className={`w-28 px-6 py-4 text-right whitespace-nowrap tabular-nums font-medium ${order.balance > 0 ? "text-danger-main" : "text-success-main"}`}>
                       ${order.balance?.toLocaleString()}
                     </td>
-
-                    {/* Date */}
                     <td className="w-36 px-6 py-4 text-xs text-text-muted whitespace-nowrap">
                       {formatDate(order.createdAt)}
                     </td>
-
-                    {/* Actions: View Details + Status Menu */}
                     <td className="w-20 px-6 py-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-4">
-                        {/* View Details Button */}
+                      <div
+                        className="relative flex items-center justify-end gap-4"
+                        tabIndex={-1}
+                        onBlur={(e) => {
+                          if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+                            setOpenMenu(null);
+                          }
+                        }}
+                      >
                         <button
                           onClick={() => navigate(`/orders/${order.orderId}`)}
                           className="rounded-full p-5 text-text-muted hover:bg-brand-subtle hover:text-brand-primary transition-all duration-200 press-scale"
@@ -168,52 +133,46 @@ export default function Tailoring() {
                         >
                           <Eye className="w-5 h-5" />
                         </button>
-
-                        {/* Status Menu Trigger (Popover) */}
                         <button
-                          popovertarget={`menu-${order.orderId}`}
-                          onMouseDown={(e) => e.preventDefault()}
-                          onClick={handleOpenMenu}
+                          onClick={() => setOpenMenu(openMenu === order.orderId ? null : order.orderId)}
                           className="rounded-full p-5 text-text-muted hover:bg-surface-muted hover:text-text-primary transition-all duration-200 press-scale"
                           aria-label="Actions"
                         >
                           <MoreVertical className="w-5 h-5" />
                         </button>
 
-                        {/* Status Popover Menu */}
-                        <div
-                          id={`menu-${order.orderId}`}
-                          popover="auto"
-                          style={{
-                            position: "absolute",
-                            top: menuPos.top,
-                            left: menuPos.left,
-                            margin: 0,
-                          }}
-                          className="w-56 whitespace-nowrap rounded-input border border-border-default bg-surface-default py-4 shadow-elevation-2 focus-visible:outline-none"
-                        >
-                          {transitions.length === 0 ? (
-                            <p className="px-16 py-8 text-body-small leading-none text-text-muted">No actions available</p>
-                          ) : (
-                            transitions.map((t, i) => (
-                              <div key={t.status}>
-                                {t.status === "CANCELLED" && i > 0 && (
-                                  <div className="my-2 border-t border-border-default" />
-                                )}
-                                <button
-                                  onClick={() => handleStatusChange(order.orderId, t.status)}
-                                  className={`flex w-full items-center gap-8 px-16 py-8 text-left text-body-small leading-none transition-colors ${
-                                    t.status === "CANCELLED"
-                                      ? "text-danger-main hover:bg-danger-bg"
-                                      : "text-text-primary hover:bg-surface-muted"
-                                  }`}
-                                >
-                                  {t.label}
-                                </button>
-                              </div>
-                            ))
-                          )}
-                        </div>
+                        {/* Dropdown — absolute inside the relative container */}
+                        {openMenu === order.orderId && (
+                          <div className="absolute right-0 top-full mt-2 z-10 w-56 whitespace-nowrap rounded-input border border-border-default bg-surface-default py-4 shadow-elevation-2 animate-scale-in">
+                            {(() => {
+                              const transitions = STATUS_TRANSITIONS[order.orderStatus] || [];
+                              if (transitions.length === 0) {
+                                return <p className="px-16 py-8 text-body-small leading-none text-text-muted">No actions available</p>;
+                              }
+                              return transitions.map((t, i) => (
+                                <Fragment key={t.status}>
+                                  {t.status === "CANCELLED" && i > 0 && (
+                                    <div className="my-2 border-t border-border-default" />
+                                  )}
+                                  <button
+                                    type="button"
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      handleStatusChange(order.orderId, t.status);
+                                    }}
+                                    className={`flex w-full items-center gap-8 px-16 py-8 text-left text-body-small leading-none transition-colors ${
+                                      t.status === "CANCELLED"
+                                        ? "text-danger-main hover:bg-danger-bg"
+                                        : "text-text-primary hover:bg-surface-muted"
+                                    }`}
+                                  >
+                                    {t.label}
+                                  </button>
+                                </Fragment>
+                              ));
+                            })()}
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>

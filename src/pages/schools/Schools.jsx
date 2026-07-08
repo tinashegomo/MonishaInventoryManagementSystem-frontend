@@ -1,4 +1,6 @@
-import { useState, useRef, useMemo } from "react";
+import { useState, useMemo } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
 import { Plus, Pencil, Trash2, GraduationCap, Loader2 } from "lucide-react";
 import {
   useGetAllSchools,
@@ -7,15 +9,22 @@ import {
   useDeleteSchool,
   useGetCurrentUser,
 } from "@/hooks/InventoryHooks";
-import { SchoolModal } from "@/components/school/SchoolModal";
+import Modal from "@/components/shared/Modal";
+import { schoolRequestSchema, schoolRequestDefaultValues } from "@/yupSchema/school/SchoolRequestDTO";
 import { formatDate } from "@/utils/dateUtils";
+
+const inputBase =
+  "w-full rounded-input border bg-surface-elevated px-16 py-12 text-body-normal text-text-primary placeholder:text-text-muted outline-none transition-all duration-200";
+const inputOk =
+  "border-border-default focus:border-border-focus focus-ring";
+const inputErr =
+  "border-danger-main focus:border-danger-hover focus:ring-2 focus:ring-danger-bg";
 
 export default function SchoolsPage() {
   // ─── State ─────────────────────────────────────────────────────
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
-  const schoolDialogRef = useRef(null);
 
   // ─── Data & Mutations ──────────────────────────────────────────
   const { data: user } = useGetCurrentUser();
@@ -192,16 +201,76 @@ export default function SchoolsPage() {
         </div>
       )}
 
-      {/* ── Modal ───────────────────────────────────────────────── */}
-      <SchoolModal
-        key={selectedSchool?.schoolId ?? "create"}
-        dialogRef={schoolDialogRef}
-        isOpen={isModalOpen}
-        onClose={handleCloseModal}
-        onSubmit={selectedSchool ? handleUpdate : handleCreate}
-        isPending={selectedSchool ? isUpdating : isCreating}
-        school={selectedSchool}
-      />
+      {/* ── Create / Edit Modal ─────────────────────────────────── */}
+      <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
+
+        <Modal.Header onClose={handleCloseModal}>
+          {selectedSchool ? "Edit School" : "Create School"}
+        </Modal.Header>
+
+        <Modal.Body>
+          <SchoolForm
+            school={selectedSchool}
+            onSubmit={selectedSchool ? handleUpdate : handleCreate}
+            onCancel={handleCloseModal}
+            isPending={selectedSchool ? isUpdating : isCreating}
+          />
+        </Modal.Body>
+
+      </Modal>
     </div>
+  );
+}
+
+// ─── Inline School Form ──────────────────────────────────────
+function SchoolForm({ school, onSubmit, onCancel, isPending }) {
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: yupResolver(schoolRequestSchema),
+    defaultValues: school ? { schoolName: school.schoolName } : schoolRequestDefaultValues,
+    mode: "onBlur",
+  });
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-20">
+      <div>
+        <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
+          School Name
+        </label>
+        <input
+          type="text"
+          placeholder="e.g. Zimuto High School"
+          aria-invalid={errors.schoolName ? "true" : "false"}
+          className={`${inputBase} ${errors.schoolName ? inputErr : inputOk}`}
+          {...register("schoolName")}
+        />
+        {errors.schoolName && (
+          <p className="mt-4 text-body-small text-danger-main">{errors.schoolName.message}</p>
+        )}
+      </div>
+
+      <div className="flex items-center justify-end gap-12 pt-4">
+        <button
+          type="button"
+          onMouseDown={(e) => { e.preventDefault(); onCancel(); }}
+          className="rounded-input border border-border-default px-14 py-8 text-sm font-medium text-text-secondary hover:bg-surface-muted transition-all duration-200 press-scale"
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          onMouseDown={(e) => e.preventDefault()}
+          disabled={isPending}
+          className="inline-flex items-center justify-center gap-8 rounded-input bg-brand-primary px-14 py-8 text-sm font-semibold text-neutral-0 shadow-elevation-1 hover:bg-brand-hover hover:shadow-elevation-2 active:bg-brand-pressed disabled:cursor-not-allowed disabled:opacity-60 press-scale transition-all duration-200"
+        >
+          {isPending ? (
+            <><Loader2 className="h-16 w-16 animate-spin" />{school ? "Saving..." : "Creating..."}</>
+          ) : school ? (
+            "Save Changes"
+          ) : (
+            "Create School"
+          )}
+        </button>
+      </div>
+    </form>
   );
 }

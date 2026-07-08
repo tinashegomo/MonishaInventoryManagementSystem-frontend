@@ -32,13 +32,13 @@ export default function Dashboard() {
 
   // ─── Render ────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
+    <div className="min-h-screen bg-bg-default">
       <div className="animate-fade-in">
         {/* ── Welcome Banner ── */}
         <div className="mb-40 flex flex-col gap-16 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Welcome back, {user?.userName || "there"}</h1>
-            <p className="mt-8 text-sm text-gray-500">Here&apos;s what&apos;s happening in your inventory today.</p>
+            <h1 className="text-3xl font-bold text-text-primary">Welcome back, {user?.userName || "there"}</h1>
+            <p className="mt-8 text-sm text-text-muted">Here&apos;s what&apos;s happening in your inventory today.</p>
           </div>
           {orders.length > 0 && (
             <div className="flex items-center gap-8">

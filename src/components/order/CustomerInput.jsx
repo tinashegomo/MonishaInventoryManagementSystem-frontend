@@ -11,28 +11,25 @@ const inputErr =
 /**
  * CustomerInput — typeahead with inline new-customer expansion.
  *
- * Shows a popover of existing customers as the user types.
+ * Shows a dropdown of existing customers as the user types.
  * If no match found, expands inline fields for creating a new customer.
  *
  * customerMode: true = existing customer, false = new customer, null = nothing selected
- *
- * Uses the HTML5 Popover API for the search results dropdown.
- * - Input: `popovertarget="customer-typeahead"`
- * - Dropdown: `id="customer-typeahead" popover="auto"`
- * - Light-dismiss handles closing when clicking outside
  */
 export default function CustomerInput({ register, setValue, errors, customers = [], customerMode, setCustomerMode, selectedCustomer, setSelectedCustomer }) {
 
   // ─── State ──────────────────────────────────────────────────
   const [searchText, setSearchText] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
 
   // ─── Computed Values ────────────────────────────────────────
-  // Filter customers by name (case-insensitive contains)
   const matchingCustomers = useMemo(() => {
     if (!searchText.trim()) return [];
     const query = searchText.toLowerCase();
     return customers.filter((customer) => customer.customerName.toLowerCase().includes(query));
   }, [customers, searchText]);
+
+  const showDropdown = isFocused && matchingCustomers.length > 0;
 
   // ─── Functions ──────────────────────────────────────────────
 
@@ -43,15 +40,13 @@ export default function CustomerInput({ register, setValue, errors, customers = 
     setValue("customerId", customer.customerId);
     setValue("phoneNumber", "");
     setSearchText("");
-    // Close the popover after selection
-    document.getElementById("customer-typeahead")?.hidePopover();
+    setIsFocused(false);
   };
 
   const handleCreateNew = () => {
     setCustomerMode(false);
     setValue("customerId", "");
-    // Close the popover — the "Create new customer" button itself closes it
-    document.getElementById("customer-typeahead")?.hidePopover();
+    setIsFocused(false);
   };
 
   const handleClear = () => {
@@ -64,9 +59,6 @@ export default function CustomerInput({ register, setValue, errors, customers = 
   const handleInputChange = (e) => {
     const value = e.target.value;
     setSearchText(value);
-    // Don't manually show the popover — the user is typing in the input,
-    // and the popover opens via popovertarget. We just need to update the
-    // filtered list so the popover content reflects the search.
   };
 
   // ─── Render ─────────────────────────────────────────────────
@@ -78,14 +70,21 @@ export default function CustomerInput({ register, setValue, errors, customers = 
         <label className="mb-8 block text-ui-label font-semibold text-text-secondary">
           Customer Name
         </label>
-        <div className="relative">
-          {/* Input with popover trigger — typing here opens the search results. */}
+        <div
+          className="relative"
+          tabIndex={-1}
+          onBlur={(e) => {
+            if (!e.relatedTarget || !e.currentTarget.contains(e.relatedTarget)) {
+              setIsFocused(false);
+            }
+          }}
+        >
           <input
             type="text"
             placeholder="Type customer name..."
             aria-invalid={errors.customerName ? "true" : "false"}
             className={`${inputBase} ${errors.customerName ? inputErr : inputOk}`}
-            popovertarget="customer-typeahead"
+            onFocus={() => setIsFocused(true)}
             {...register("customerName")}
             onChange={(e) => {
               register("customerName").onChange(e);
@@ -93,21 +92,20 @@ export default function CustomerInput({ register, setValue, errors, customers = 
             }}
           />
 
-          {/* Search results popover — only shown when there are matches. */}
-          {/* `popover="auto"` enables light-dismiss and top-layer rendering. */}
-          {matchingCustomers.length > 0 && (
-            <div
-              id="customer-typeahead"
-              popover="auto"
-              className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 max-h-200 overflow-y-auto animate-scale-in"
-            >
+          {/* Search results dropdown */}
+          {showDropdown && (
+            <div className="absolute z-10 mt-2 w-full rounded-input border border-border-default bg-surface-default shadow-elevation-2 max-h-200 overflow-y-auto animate-scale-in">
               {matchingCustomers.map((customer) => (
-                <div
+                <button
                   key={customer.customerId}
-                  onClick={() => handleSelect(customer)}
+                  type="button"
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    handleSelect(customer);
+                  }}
                   className="flex w-full items-center justify-between px-16 py-10 cursor-pointer hover:bg-surface-muted transition-colors"
                 >
-                  <div>
+                  <div className="text-left">
                     <p className="text-body-normal font-medium text-text-primary">
                       {customer.customerName}
                     </p>
@@ -118,7 +116,7 @@ export default function CustomerInput({ register, setValue, errors, customers = 
                   {selectedCustomer?.customerId === customer.customerId && (
                     <Check className="h-14 w-14 text-brand-primary" />
                   )}
-                </div>
+                </button>
               ))}
             </div>
           )}
@@ -158,7 +156,10 @@ export default function CustomerInput({ register, setValue, errors, customers = 
       {customerMode === null && !selectedCustomer && searchText.trim().length > 0 && matchingCustomers.length === 0 && (
         <button
           type="button"
-          onClick={handleCreateNew}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            handleCreateNew();
+          }}
           className="flex w-full items-center gap-10 rounded-input border border-dashed border-brand-subtle bg-brand-tint/50 px-16 py-12 text-body-normal font-medium text-brand-primary hover:bg-brand-tint transition-all duration-200 press-scale"
         >
           <UserPlus className="h-16 w-16" />
