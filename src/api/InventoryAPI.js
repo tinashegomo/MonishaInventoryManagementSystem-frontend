@@ -180,25 +180,55 @@ export const addSizesToBatch = async (batchId, sizes) => {
   return response.data;
 };
 
+export const restockBatch = async (batchId, items) => {
+  const response = await API.post(`/warehouse/restock-batch/${batchId}`, items);
+  return response.data;
+};
+
+export const getRestockHistory = async (batchId) => {
+  const response = await API.get(`/warehouse/restock-history/${batchId}`);
+  return response.data;
+};
+
+export const getDepletedHistory = async (batchId) => {
+  const response = await API.get(`/warehouse/depleted-history/${batchId}`);
+  return response.data;
+};
+
 /* PRODUCT APIs */
 
 export const createProduct = async (ProductRequestDTO) => {
-  const response = await API.post(`product/create-product`, ProductRequestDTO);
+  const response = await API.post(`/product/create-product`, ProductRequestDTO);
   return response.data;
 };
 
 export const getAllProducts = async () => {
-  const response = await API.get(`product/get-all-products`);
+  const response = await API.get(`/product/get-all-products`);
   return response.data;
 };
 
 export const getProductById = async (productId) => {
-  const response = await API.get(`product/get-product-byId/${productId}`);
+  const response = await API.get(`/product/get-product-byId/${productId}`);
   return response.data;
 };
 
 export const deleteProduct = async (productId) => {
-  const response = await API.delete(`product/delete-product/${productId}`);
+  const response = await API.delete(`/product/delete-product/${productId}`);
+  return response.data;
+};
+
+export const restockProduct = async (productId, items) => {
+  const response = await API.post(`/product/restock-product/${productId}`, items);
+  return response.data;
+};
+
+export const getProductRestockHistory = async (productId) => {
+  const response = await API.get(`/product/restock-history/${productId}`);
+  return response.data;
+};
+
+export const getProductDepletedHistory = async (productId) => {
+  const response = await API.get(`/product/depleted-history/${productId}`);
   return response.data;
 };
 
@@ -226,5 +256,17 @@ export const getOrdersByStatus = async (status) => {
 
 export const updateOrderStatus = async (orderId, status) => {
   const response = await API.patch(`/order/update-order-status/${orderId}`, null, { params: { status:status } });
+  return response.data;
+};
+
+/* ADMIN APIs */
+
+export const resetDatabase = async () => {
+  const response = await API.delete("/admin/reset-database");
+  return response.data;
+};
+
+export const getResetAuditLog = async () => {
+  const response = await API.get("/admin/reset-audit-log");
   return response.data;
 };
