@@ -30,7 +30,7 @@ export default function BottomNav() {
   };
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 h-16 bg-surface-default border-t border-border-default shadow-[0_-1px_3px_rgba(0,0,0,0.05)] flex items-center justify-around px-2 z-50 lg:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 bg-surface-default border-t border-border-default shadow-[0_-1px_3px_rgba(0,0,0,0.05)] flex items-center justify-around px-2 pt-1 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] z-50 lg:hidden">
 
       {/* Primary Links */}
       {PRIMARY_LINKS.map((item) => (
