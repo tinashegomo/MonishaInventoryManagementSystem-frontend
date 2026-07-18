@@ -20,6 +20,7 @@ const ORDER_COLUMNS = [
   { header: "Total", key: "totalAmount" },
   { header: "Paid", key: "paidAmount" },
   { header: "Balance", key: "balance" },
+  { header: "Payment Type", key: "paymentType" },
   { header: "Date", key: "createdAt" },
   { header: "Created By", key: "createdBy" },
 ];
@@ -122,6 +123,7 @@ export default function Orders() {
                 <th className="w-28 px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-muted">Total</th>
                 <th className="w-28 px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-muted">Paid</th>
                 <th className="w-28 px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-muted">Balance</th>
+                <th className="min-w-[120px] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted">Payment</th>
                 <th className="w-36 px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap">Date</th>
                 <th className="min-w-[120px] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted whitespace-nowrap">Created By</th>
                 <th className="w-20 px-6 py-3 text-right text-xs font-semibold uppercase tracking-wide text-text-muted">Actions</th>
@@ -152,6 +154,9 @@ export default function Orders() {
                     </td>
                     <td className={`w-28 px-6 py-4 text-right whitespace-nowrap tabular-nums font-medium ${order.balance > 0 ? "text-danger-main" : "text-success-main"}`}>
                       ${order.balance?.toLocaleString()}
+                    </td>
+                    <td className="min-w-[120px] px-6 py-4 text-xs font-medium text-text-secondary whitespace-nowrap">
+                      {order.paymentType?.replace(/_/g, ' ') || '-'}
                     </td>
                     <td className="w-36 px-6 py-4 text-xs text-text-muted whitespace-nowrap">
                       {formatDate(order.createdAt)}

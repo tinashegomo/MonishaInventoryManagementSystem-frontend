@@ -1,4 +1,4 @@
-import { Eye, RefreshCw, AlertTriangle } from "lucide-react";
+import { Eye, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/utils/dateUtils";
 
@@ -15,6 +15,7 @@ export const ProductList = ({ products, onRestock }) => {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border-default">
+            <th className="w-10 px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-text-muted"></th>
             <th className="min-w-[200px] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted">Product Name</th>
             <th className="min-w-[120px] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted">Batch</th>
             <th className="min-w-[120px] px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-text-muted">School</th>
@@ -42,6 +43,13 @@ export const ProductList = ({ products, onRestock }) => {
                 }`}
                 style={{ animationDelay: `${index * 30}ms` }}
               >
+                <td className="w-10 px-4 py-4 text-center">
+                  {(isDepleted || isLow) && (
+                    <svg viewBox="0 0 16 16" fill="currentColor" className={`w-5 h-5 mx-auto shrink-0 ${isDepleted ? "text-red-500" : "text-amber-500"}`}>
+                      <path d="M8 2L15.5 13.5H0.5L8 2Z" />
+                    </svg>
+                  )}
+                </td>
                 <td className="min-w-[200px] px-6 py-4 font-medium text-text-primary whitespace-nowrap truncate" title={product.productName}>
                   {product.productName}
                 </td>
@@ -62,16 +70,6 @@ export const ProductList = ({ products, onRestock }) => {
                 </td>
                 <td className="w-20 px-6 py-4 text-text-primary text-right whitespace-nowrap tabular-nums">
                   {product.totalQuantity}
-                  {isDepleted && (
-                    <span className="ml-8 inline-block rounded-full bg-danger-bg px-6 py-2 text-[10px] font-semibold uppercase text-danger-main">
-                      Depleted
-                    </span>
-                  )}
-                  {!isDepleted && isLow && (
-                    <span className="ml-8 inline-flex items-center gap-4 rounded-full bg-amber-100 px-6 py-2 text-[10px] font-semibold uppercase text-amber-700 dark:bg-amber-900 dark:text-amber-300">
-                      <AlertTriangle className="w-3 h-3" /> Low
-                    </span>
-                  )}
                 </td>
                 <td className="w-24 px-6 py-4 text-text-secondary text-right whitespace-nowrap tabular-nums">
                   ${product.productPrice?.toLocaleString()}
